@@ -7,40 +7,33 @@
 
 import Foundation
 import Alamofire
+import RxSwift
+
 
 
 class WeatherAPIService: WeatherService {
     
-    private var apiKey: String? {
-        guard let filePath = Bundle.main.path(forResource: "KeyList", ofType: "plist") else {
+    static func getApiKey()-> String {
+        guard let filePath = Bundle.main.url(forResource: "KeyList", withExtension: "plist") else {
             fatalError("Not foumd KeyList file")
         }
         do{
-            // .plist를 딕셔너리로 받아오기
-            let plist = NSDictionary(contentsOfFile: filePath)
-            let data = try Data(contentsOf: URL(fileURLWithPath: filePath))
-            if let jsonDictionary = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                print(jsonDictionary) // JSON 딕셔너리 출력
-                
-                // 딕셔너리에서 값 찾기
-                guard let value = plist?.object(forKey: "OPENWEATHERMAP_KEY") as? String else {
-                    fatalError("Couldn't find key 'OPENWEATHERMAP_KEY' in 'KeyList.plist'.")
-                }
-                
-                return value
-            } else {
-                print("JSON 형식이 맞지 않습니다.")
+            
+            guard let plistData = try? Data(contentsOf: filePath),
+                  let dict = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? NSDictionary else {
+                fatalError("Couldn't find key 'OPENWEATHERMAP_KEY' in 'KeyList.plist'.")
             }
+        let value = dict["OPENWEATHERMAP_KEY"] as! String
+            return value
         } catch {
             print("Error rading json file: \(error)")
         }
-      return nil
+      //return nil
     }
     
     
     
-    func fetchWeather() {
-        
+    func fetchWeather(for city: String)  {
     }
     
 }

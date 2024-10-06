@@ -12,10 +12,16 @@ class RootViewController: UINavigationController {
     
     private lazy var weatherViewController: UIViewController = {
         let service = WeatherAPIService()
-        let viewModel = WeatherViewModel(weatherService: service)
+        let viewModel = WeatherViewModel(weatherService: service, sections: .today)
         let mainViewController = WeatherViewController(viewModel: viewModel)
         return mainViewController
     }()
+    
+//    private lazy var searchViewController: UIViewController = {
+//        let searchViewController = SearchViewController()
+//        return searchViewController
+//    }()
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()

@@ -50,7 +50,7 @@ extension BaseAPIURLConvertable {
 protocol WeatherAPIURLConvertible: BaseAPIURLConvertable {}
 
 extension WeatherAPIURLConvertible {
-    var basePath: String { "https://api.openweathermap.org" }
+    var basePath: String { "https://api.openweathermap.org/data/2.5" }
     
     var header: HTTPHeaders? {
         [
