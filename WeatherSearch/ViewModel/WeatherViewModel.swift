@@ -20,7 +20,7 @@ final class WeatherViewModel {
     private let weatherService: WeatherService
     private let disposeBag = DisposeBag()
     
-    let searchText = BehaviorRelay<String>(value: "")
+  
     //도시 이름, 위도 및 경도 입력을 위한 Relay
     var searchCity = BehaviorRelay<SearchCity?>(value: nil)
     //결과 저장
@@ -29,7 +29,7 @@ final class WeatherViewModel {
     let filteredCities = BehaviorRelay<[CityDataList]>(value: [])
     
     // 도시 전체 리스트
-    private var allCities = BehaviorRelay<[CityDataList]>(value: [])
+     let allCities = BehaviorRelay<[CityDataList]>(value: [])
     
     var isLoading = BehaviorRelay<Bool>(value: false)
     var errorMessage = PublishRelay<String>()
@@ -41,19 +41,6 @@ final class WeatherViewModel {
         self.sections = sections
         bindInputToFetchWeather()
         
-        // 검색어에 따른 필터링 로직
-             searchText
-                 .distinctUntilChanged()
-                 .flatMapLatest { query -> Observable<[CityDataList]> in
-                     if query.isEmpty {
-                         return Observable.just(self.allCities.value)  // 검색어가 없을 때 전체 도시 반환
-                     } else {
-                         let filtered = self.allCities.value.filter { $0.name.lowercased().contains(query.lowercased()) }
-                         return Observable.just(filtered)
-                     }
-                 }
-                 .bind(to: filteredCities)
-                 .disposed(by: disposeBag)
     }
     
     private func bindInputToFetchWeather() {

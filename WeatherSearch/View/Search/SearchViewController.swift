@@ -12,11 +12,13 @@ import UIKit
 
 final class SearchViewController: UIViewController {
     
+    let searchText = BehaviorRelay<String>(value: "")
     private let searchBar = UISearchBar()
    private let tableView = UITableView()
     private let viewModel: WeatherViewModel
        private let disposeBag = DisposeBag()
      var didSelectCity = PublishSubject<SearchCity>()
+    
     
     init(viewModel: WeatherViewModel) {
         self.viewModel = viewModel
@@ -38,6 +40,7 @@ final class SearchViewController: UIViewController {
            setupConstraints()
            bindTableView()
            setupKeyboardNotification()  // 키보드 노티피케이션 설정
+           bindSearchBar()
 
        }
     
@@ -78,6 +81,22 @@ final class SearchViewController: UIViewController {
     
     deinit {
         NotificationCenter.default.removeObserver(self)
+    }
+    
+    private func bindSearchBar() {
+        // 검색어에 따른 필터링 로직
+        searchBar.rx.text.orEmpty
+                 .distinctUntilChanged()
+                 .flatMapLatest { query -> Observable<[CityDataList]> in
+                     if query.isEmpty {
+                         return Observable.just(self.viewModel.allCities.value)  // 검색어가 없을 때 전체 도시 반환
+                     } else {
+                         let filtered = self.viewModel.allCities.value.filter { $0.name.lowercased().contains(query.lowercased()) }
+                         return Observable.just(filtered)
+                     }
+                 }
+                 .bind(to: viewModel.filteredCities)
+                 .disposed(by: disposeBag)
     }
         
     // ViewModel과의 바인딩 설정
