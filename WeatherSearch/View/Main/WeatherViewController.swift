@@ -192,10 +192,11 @@ extension WeatherViewController: UICollectionViewDataSource {
             return cell
         case 1:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "HourlyWeatherCell", for: indexPath) as! HourlyWeatherCell
-            
+            //이틀치의 데이터만 전달
             if let data = viewModel.weatherData.value {
                 print("데이터 전달")
-                cell.configure(with: data.list)
+              let sliced =  data.list.prefix(18)
+                cell.configure(with: Array(sliced))
             }
             return cell
         case 2:

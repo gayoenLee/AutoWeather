@@ -117,9 +117,8 @@ final class HourlyWeatherCell: UICollectionViewCell {
     // 데이터 설정 메서드
     func configure(with hourlyWeatherData: [WeatherList]) {
         self.hourlyWeatherData = hourlyWeatherData
-        print("들어온 데이터: \(self.hourlyWeatherData)")
+        let s = hourlyWeatherData.map({ $0.dtTxt})
         let data = filterData()
-        print("필터링된 데이터")
   
         var labelTxt = ""
         guard let data = data else { return }
@@ -139,14 +138,17 @@ final class HourlyWeatherCell: UICollectionViewCell {
     func filterData() -> [WeatherList]? {
         // 현재 한국 시간을 구함
         let currentDate = Date()
-        if let minTime = currentDate.toUTC(){
-            print("최소: \(minTime)")
-            let maxTime = minTime.addOneDay()!
+        print("현재 한국 시간: \(currentDate)")
+        let convertedData = currentDate.toUTC()
+        if let minDate = convertedData.0, let minHour = convertedData.1{
+            print("최소: \(minDate), 시각만: \(minHour)") // 시간만(hour) 가져와서 비교
+            
+            let maxTime = minDate.addOneDay()!
             print("최대: \(maxTime)")
             
                 let filteredData = self.hourlyWeatherData.compactMap({ weather in
                 if let val = weather.dtTxt.isoStringToDate(dateString: weather.dtTxt) {
-                    if minTime <= val && val <= maxTime {
+                    if minHour <= val && val <= maxTime {
                         return weather
                     }
                 }

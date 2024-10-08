@@ -18,7 +18,7 @@ extension Date {
         }
     
     // 한국 시간을 UTC로 변환하는 함수
-    func toUTC() -> Date? {
+    func toUTC() -> (Date?,Date?) {
         // 한국 시간대 설정된 Calendar 사용
         var calendar = Calendar.current
         calendar.timeZone = TimeZone(abbreviation: "KST")!  // 한국 시간대 설정
@@ -26,7 +26,24 @@ extension Date {
         // 현재 시간을 UTC 시간대로 변환
         let utcTimeZone = TimeZone(identifier: "UTC")!
         let utcDate = calendar.date(from: calendar.dateComponents(in: utcTimeZone, from: self))
-        return utcDate
+        
+        // UTC로 변환된 시간에서 시각만 추출
+           guard let date = utcDate else { return (nil,nil) }
+        // 현재 날짜의 시, 분, 초만 추출하여 Date로 변환
+        let components = calendar.dateComponents([.year, .month, .day, .hour], from: date)
+        var zeroedComponents = DateComponents()
+               zeroedComponents.year = components.year
+               zeroedComponents.month = components.month
+               zeroedComponents.day = components.day
+               zeroedComponents.hour = components.hour
+               zeroedComponents.minute = 0
+               zeroedComponents.second = 0
+               
+               
+            // 변환된 시각만을 포함한 Date 생성
+            let utcHourDate = calendar.date(from: zeroedComponents)
+        
+        return (utcDate,utcHourDate)
     }
     
     // UTC 시간을 한국 시간으로 변환하는 함수 (반대 기능)

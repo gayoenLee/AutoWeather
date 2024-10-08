@@ -45,7 +45,7 @@ enum WeatherRequest: WeatherAPIURLConvertible {
                     "appid":info.appid,
                     "units": info.units,
                     "lang":"kr",
-                    "cnt" : 7
+                    "cnt" : 35
             ]
             
             
@@ -55,14 +55,14 @@ enum WeatherRequest: WeatherAPIURLConvertible {
                     "appid":info.appid,
                     "units": info.units,
                     "lang":"kr",
-                    "cnt" : 7
+                    "cnt" : 35
             ]
         case .weekdaysCity(let info):
             return ["q": info.cityName!,
                     "appid":info.appid,
                     "units": info.units,
                     "lang":"kr",
-                    "cnt" : 7
+                    "cnt" : 35
             ]
         case .weekdaysLatLon(let info):
             return ["lat":info.lat!,
@@ -70,7 +70,7 @@ enum WeatherRequest: WeatherAPIURLConvertible {
                     "appid":info.appid,
                     "units": info.units,
                     "lang":"kr",
-                    "cnt" : 7
+                    "cnt" : 35
             ]
         }
     }
