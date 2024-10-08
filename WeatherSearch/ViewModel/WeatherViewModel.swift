@@ -21,7 +21,8 @@ final class WeatherViewModel {
     private let disposeBag = DisposeBag()
     
     // 테이블뷰에 전달할 데이터를 위한 Observable
-        let dailyWeatherData: BehaviorRelay<[(dayOfWeek: String, tempMax: Double, tempMin: Double, weatherIcon: String)]> = BehaviorRelay(value: [])
+    let dailyWeatherData: BehaviorRelay<[(dayOfWeek: String, tempMax: Double, tempMin: Double, weatherIcon: String)]> = BehaviorRelay(value: [])
+    let averageData = BehaviorRelay<(humidity: Double, clouds: Double, wind: Double)?>(value:(nil))
     //도시 이름, 위도 및 경도 입력을 위한 Relay
     var searchCity = BehaviorRelay<SearchCity?>(value: nil)
     //결과 저장
@@ -44,11 +45,28 @@ final class WeatherViewModel {
         
     }
     
+    func calculateAverageHumidWind(_ weatherList: [WeatherList]) {
+        
+        // 습도 평균 계산
+        let totalHumidity = weatherList.map { Double($0.main.humidity) }.reduce(0, +)
+        let averageHumidity = totalHumidity / Double(weatherList.count)
+        
+        // 구름 평균 계산
+        let totalClouds = weatherList.map { Double($0.clouds.all) }.reduce(0, +)
+        let averageClouds = totalClouds / Double(weatherList.count)
+        
+        // 바람 속도 평균 계산
+        let totalWindSpeed = weatherList.map { $0.wind.speed }.reduce(0, +)
+        let averageWindSpeed = totalWindSpeed / Double(weatherList.count)
+        
+        self.averageData.accept((averageHumidity, averageClouds, averageWindSpeed))
+    }
+    
     func processDailyWeatherData(_ weatherModel: WeatherModel) {
         let groupedData = self.groupWeatherByDay(weatherModel.list)
         
         //일별로 최대, 최저 기온 및 날씨 아이콘 결정
-    let processedData = groupedData.map { (day, data) -> (String, Double, Double, String) in
+        let processedData = groupedData.map { (day, data) -> (String, Double, Double, String) in
             let maxTemp = data.map { $0.main.tempMax }.max() ?? 0
             let minTemp = data.map { $0.main.tempMin }.min() ?? 0
             let weatherIcon = self.determineMostFrequentOrSevereIcon(from: data.map { $0.weather.first?.id ?? 800 })
@@ -58,22 +76,22 @@ final class WeatherViewModel {
     }
     
     // 데이터 그룹화 함수
-        private func groupWeatherByDay(_ weatherList: [WeatherList]) -> [String: [WeatherList]] {
-            var groupedWeather = [String: [WeatherList]]()
-            let calendar = Calendar.current
+    private func groupWeatherByDay(_ weatherList: [WeatherList]) -> [String: [WeatherList]] {
+        var groupedWeather = [String: [WeatherList]]()
+        let calendar = Calendar.current
+        
+        for weather in weatherList {
+            let date = Date(timeIntervalSince1970: TimeInterval(weather.dt))
+            let day = calendar.startOfDay(for: date).dayOfWeek()
             
-            for weather in weatherList {
-                let date = Date(timeIntervalSince1970: TimeInterval(weather.dt))
-                let day = calendar.startOfDay(for: date).dayOfWeek()
-                
-                if groupedWeather[day] != nil {
-                    groupedWeather[day]?.append(weather)
-                } else {
-                    groupedWeather[day] = [weather]
-                }
+            if groupedWeather[day] != nil {
+                groupedWeather[day]?.append(weather)
+            } else {
+                groupedWeather[day] = [weather]
             }
-            return groupedWeather
         }
+        return groupedWeather
+    }
     
     // 날씨 id 값들을 분석해서 가장 중요한 아이콘을 결정하는 함수
     private func determineMostFrequentOrSevereIcon(from weatherIds: [Int]) -> String {
@@ -140,10 +158,11 @@ final class WeatherViewModel {
                         self.errorMessage.accept("Failed to fetch weather data")
                     })
             }
-            
+        
             .subscribe(onNext: {[weak self] weatherModel in
                 print("여기로 오는지: \(weatherModel)")
                 self?.processDailyWeatherData(weatherModel)
+                self?.calculateAverageHumidWind(weatherModel.list)
                 self?.weatherData.accept(weatherModel)
                 
             })

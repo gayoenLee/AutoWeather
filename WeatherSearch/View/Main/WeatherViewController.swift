@@ -107,7 +107,7 @@ final class WeatherViewController: UIViewController {
         collectionView.register(HourlyWeatherCell.self, forCellWithReuseIdentifier: "HourlyWeatherCell")
         collectionView.register(FiveDayInfoCell.self, forCellWithReuseIdentifier: "FiveDayInfoCell")
         collectionView.register(MapViewCell.self, forCellWithReuseIdentifier: "MapViewCell")
-        collectionView.register(OtherInfoCell.self, forCellWithReuseIdentifier: "OtherInfoCell")
+        collectionView.register(GridWeatherView.self, forCellWithReuseIdentifier: "GridWeatherView")
         collectionView.collectionViewLayout = layout
         collectionView.delegate = self
         collectionView.dataSource = self
@@ -155,6 +155,7 @@ final class WeatherViewController: UIViewController {
         // .drive(errorLabel.rx.text)
         // .disposed(by: disposeBag)
     }
+    
 }
 extension WeatherViewController: UICollectionViewDelegateFlowLayout {
     
@@ -215,9 +216,11 @@ extension WeatherViewController: UICollectionViewDataSource {
             }
             return cell
         case 4:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "OtherInfoCell", for: indexPath) as! OtherInfoCell
-            if let data = viewModel.weatherData.value {
-                cell.configure(with: data.list)
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "GridWeatherView", for: indexPath) as! GridWeatherView
+            if let averageData = viewModel.averageData.value {
+                cell.configure(humidity: String(format: "%.0f%%", averageData.humidity),
+                               clouds: String(format: "%.0f%%", averageData.clouds),
+                               windSpeed: String(format: "%.2f m/s", averageData.wind))
             }
             return cell
         default:
