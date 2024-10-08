@@ -95,15 +95,15 @@ final class CityTodayInfoCell: UICollectionViewCell {
     
     // 데이터를 설정하는 함수
     func configure(with model: WeatherModel) {
-        //cityLabel.text = model.cityInfo.name
-        cityLabel.text = "서울"
-       // temperatureLabel.text = String(model.weatherList[0].main.temp)
-        temperatureLabel.text = "-7"
-//        weatherDescriptionLabel.text = model.weatherList[0].weather[0].main
-        weatherDescriptionLabel.text = "맑음"
-//        highLowLabel.text = "최고: \(model.weatherList[0].main.tempMax) | 최저: \(model.weatherList[0].main.tempMin)"
-        highLowLabel.text = "최고: 20 | 최저: -7"
+        let recentData = model.list[0]
+        cityLabel.text = model.city.name
+        let temperature = String(recentData.main.temp)
+        temperatureLabel.text = "\(temperature)°"
+        let condition = String(recentData.weather[0].koreanDescription)
+        print("날씨 바꾼 것 확인: \(condition)")
+        weatherDescriptionLabel.text = condition
+        let high = Int(recentData.main.tempMax)
+        let low = Int(recentData.main.tempMin)
+        highLowLabel.text = "최고: \(high)° | 최저: \(low)°"
     }
-    
-    
 }

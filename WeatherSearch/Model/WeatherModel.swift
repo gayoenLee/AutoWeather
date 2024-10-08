@@ -7,11 +7,12 @@
 
 import Foundation
 
-struct WeatherModel: Codable {
+struct WeatherModel: Decodable {
+    
     let cod: String
     let message, cnt: Int
-    let weatherList: [WeatherList]
-    let cityInfo: City
+    let list: [WeatherList]
+    let city: City
 }
 
 // MARK: - City
@@ -89,6 +90,25 @@ struct Sys: Codable {
 struct Weather: Codable {
     let id: Int
     let main, description, icon: String
+    
+    var koreanDescription: String {
+         switch main {
+         case "Clear":
+             return "맑음"
+         case "Clouds":
+             return "구름"
+         case "Rain":
+             return "비"
+         case "Drizzle":
+             return "이슬비"
+         case "Snow":
+             return "눈"
+         case "Thunderstorm":
+             return "천둥"
+         default:
+             return "알 수 없음"
+         }
+     }
 }
 
 // MARK: - Wind

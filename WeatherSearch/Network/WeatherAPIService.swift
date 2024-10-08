@@ -9,31 +9,39 @@ import Foundation
 import Alamofire
 import RxSwift
 
+protocol WeatherService {
+    func fetchWeather(for city: SearchCity) -> Single<WeatherModel>
+}
 
-
-class WeatherAPIService: WeatherService {
+final class WeatherAPIService: WeatherService {
     
     static func getApiKey()-> String {
-        guard let filePath = Bundle.main.url(forResource: "KeyList", withExtension: "plist") else {
-            fatalError("Not foumd KeyList file")
+        print("api key찾는중")
+        guard let weatherKey = Bundle.main.object(forInfoDictionaryKey: "WeatherAPIKey") as? String else {
+            print("Not found WeatherAPI Key")
+            return ""
         }
-        do{
-            
-            guard let plistData = try? Data(contentsOf: filePath),
-                  let dict = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? NSDictionary else {
-                fatalError("Couldn't find key 'OPENWEATHERMAP_KEY' in 'KeyList.plist'.")
-            }
-        let value = dict["OPENWEATHERMAP_KEY"] as! String
-            return value
-        } catch {
-            print("Error rading json file: \(error)")
-        }
-      //return nil
+        print("api key리턴함: \(weatherKey)")
+        return weatherKey
     }
     
     
     
-    func fetchWeather(for city: String)  {
+    func fetchWeather(for city: SearchCity) -> Single<WeatherModel>  {
+        let request : WeatherRequest
+        
+        if let name = city.cityName{
+            request = .cityName(data: city)
+        }else{
+            request = .latlon(data: city)
+        }
+        print("featch weather: \(request.parameters)")
+            let client = APIClient<WeatherRequest, WeatherModel>(request: request)
+        print("featch weather: \(client.request.urlString)")
+        print("featch ")
+
+        client.request.urlString
+            return client.requestData()
+        }
+        
     }
-    
-}

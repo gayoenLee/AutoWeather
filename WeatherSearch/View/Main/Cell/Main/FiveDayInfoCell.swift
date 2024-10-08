@@ -98,4 +98,15 @@ final class FiveDayInfoCell: UICollectionViewCell {
                  stackView.addArrangedSubview(weatherView)
              }
          }
-     }
+    
+    
+    func currentDate(){
+      var startDate = self.weatherData[0].dtTxt
+        var startDateType = startDate.isoStringToDate(dateString: startDate)
+        
+        for i in 0..<5 {
+            let newDay = startDateType?.addOneDay()
+            
+        }
+    }
+}

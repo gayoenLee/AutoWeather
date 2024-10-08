@@ -1,37 +1,43 @@
 //
 //  APIClient.swift
-//  YourWeather
+//  WeatherSearch
 //
-//  Created by 이은호 on 10/4/24.
+//  Created by 이은호 on 10/6/24.
 //
 
 import Foundation
+import RxSwift
 import Alamofire
 
-public typealias APIClientError = AFError
+
 
 public struct APIClient<Request: BaseAPIURLConvertable, Response: Decodable> {
-    private let request: Request
+    let request: Request
     
-    public init(request: Request) {
+    init(request: Request) {
         self.request = request
     }
     
-    public func request() async -> Result<Response, APIClientError>  {
-        await request.asDataRequset()
-            .serializingDecodable(Response.self)
-            .response
-            .result
+    public func requestData() -> Single<Response> {
+        return Single<Response>.create { single in
+            let dataRequest = self.request.asDataRequset()
+                .validate()
+                .responseDecodable(of: Response.self) { response in
+                    switch response.result {
+                    case .success(let data):
+                        
+                        single(.success(data))
+                    case .failure(let error):
+                        single(.failure(error))
+                        
+                        
+                    }
+                    
+                }
+            return Disposables.create {
+                dataRequest.cancel()
+            }
+            
+        }
     }
-    
-    public func requestData() async -> Result<Data, APIClientError> {
-        await request.asDataRequset()
-            .serializingData()
-            .response
-            .result
-    }
-}
-
-public struct VoidResponse: Decodable {
-    
 }

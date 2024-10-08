@@ -7,15 +7,15 @@
 
 import Foundation
 
-struct SearchCity {
+struct SearchCity: Codable, Equatable {
     var cityName: String?
     var appid: String
     var lat: String?
     var lon: String?
     var units: String
     
-    init(appid: String, lat: String, lon: String) {
-        self.cityName = "Asan"
+    init(cityName: String?, lat: String?, lon: String?) {
+        self.cityName = cityName
         self.appid = WeatherAPIService.getApiKey()
         self.lat = lat
         self.lon = lon

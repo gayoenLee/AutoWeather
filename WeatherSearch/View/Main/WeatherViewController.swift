@@ -12,16 +12,21 @@ import SnapKit
 import MapKit
 
 
-class WeatherViewController: UIViewController {
+final class WeatherViewController: UIViewController {
     
-    private let viewModel: WeatherViewModel
+    let viewModel: WeatherViewModel
     private let disposeBag = DisposeBag()
+    private let activityIndicator = UIActivityIndicatorView(style: .large) // 로딩 인디케이터
     
     private let searchBar = UISearchBar()
+    private let containerView = UIView() // SearchBar 아래에 들어갈 컨테이너 뷰
     
+    private let weatherContentView = UIView() // 기본 날씨 화면
+    let searchBarTapped = PublishSubject<Void>()  // 검색바 클릭 이벤트
+
     //가장 큰 틀
     private var collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
-
+    
     // MapView
     let mapView = MKMapView()
     
@@ -41,10 +46,55 @@ class WeatherViewController: UIViewController {
         self.navigationItem.hidesBackButton = true
         self.view.backgroundColor = .bgColor
         setupSearchBar()
+        setupContainerView()
         setupCollectionView()
-        //bindViewModel()
+        setupIndicator()
+        bindWeatherViewModel()
+        bindSearchBar()
+        bindLoadingState()
+        bindErrorState()
+        navigationItem.hidesBackButton = true
     }
     
+    private func bindSearchBar() {
+        searchBar.rx.textDidBeginEditing
+            .bind(to: searchBarTapped)
+            .disposed(by: disposeBag)
+    }
+    
+    // ContainerView 설정 (SearchBar 아래 뷰들만 교체)
+    private func setupContainerView() {
+        view.addSubview(containerView)
+        containerView.backgroundColor = .bgColor
+        containerView.snp.makeConstraints { make in
+            make.top.equalTo(searchBar.snp.bottom).offset(8)
+            make.leading.trailing.equalToSuperview()
+            make.bottom.equalTo(view.safeAreaLayoutGuide)  // 안전영역까지 containerView가 확장되도록 수정
+        }
+    }
+    //검색 화면에서 선택된 도시를 처리하는 함수
+    func selectedInSearchBar(with city: SearchCity) {
+        print("weatherVC - 검색에서 도시 한개 선택 받음 \(city)")
+        self.viewModel.searchCity.accept(city)
+    }
+    
+    private func setupSearchBar() {
+        view.addSubview(searchBar)
+        searchBar.snp.makeConstraints { make in
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(16)
+            make.leading.trailing.equalToSuperview().inset(16)
+        }
+    }
+    
+    // 날씨 화면 표시
+    private func showWeatherContent() {
+        // 날씨 데이터를 보여줄 뷰 설정
+        weatherContentView.backgroundColor = .bgColor
+        containerView.addSubview(weatherContentView)
+        weatherContentView.snp.makeConstraints { make in
+            make.edges.equalTo(containerView)
+        }
+    }
     
     private func setupCollectionView() {
         let layout = UICollectionViewFlowLayout()
@@ -64,81 +114,48 @@ class WeatherViewController: UIViewController {
         collectionView.backgroundColor = .bgColor
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         
-        view.addSubview(collectionView)
-        
+        containerView.addSubview(collectionView)
         collectionView.snp.makeConstraints { make in
-            make.top.equalTo(searchBar.snp.bottom).offset(20)
-            make.leading.trailing.bottom.equalToSuperview()
-            
-        }
-        
-        //        setupSearchBar()
-        //        setupTemperatureLabel()
-        //        setupDescriptionLabel()
-        // setupSearchButton()
-        
-    }
-    
-    private func setupSearchBar() {
-        searchBar.placeholder = "Search"
-        searchBar.backgroundImage = UIImage()
-        searchBar.isTranslucent = true
-        view.addSubview(searchBar)
-        searchBar.snp.makeConstraints { make in
-            make.top.equalTo(view.safeAreaLayoutGuide).offset(16)
-            make.leading.trailing.equalToSuperview().inset(16)
-        }
-        
-        if let textField = searchBar.value(forKey: "searchField") as? UITextField {
-            textField.backgroundColor = .clear // 검색 필드 배경 투명하게 설정
-            textField.layer.backgroundColor = UIColor.txtFieldColor?.cgColor
-            textField.layer.cornerRadius = 20
-            textField.layer.masksToBounds = true
+            make.edges.equalToSuperview()  // containerView 내에서 꽉 차도록 설정
         }
     }
     
-    //
-    //    private func setupFirstSection() {
-    //        let firstSection = UIView()
-    //
-    //        firstSection.addSubview(todayWeatherInfoCell)
-    //        stackView.addArrangedSubview(firstSection)
-    //        firstSection.snp.makeConstraints { make in
-    //            make.height.equalTo(250)
-    //        }
-    //    }
-    //
-    //    private func setupSecondSection() {
-    //        let secondSection = UIView()
-    //        secondSection.addSubview(hourlyWeatherCollectionView)
-    //        stackView.addArrangedSubview(secondSection)
-    //        secondSection.snp.makeConstraints { make in
-    //            make.height.equalTo(100)
-    //        }
     
-    //}
-    
-    
-    //이거 나중에 검색바 클릭하면 작동되도록 해야함.
-    //    private func setupSearchButton() {
-    //        searchButton.addTarget(self, action: #selector(navigateToSearch), for: .touchUpInside)
-    //        view.addSubview(searchButton)
-    //        searchButton.snp.makeConstraints { make in
-    //            make.top.equalTo(descriptionLabel.snp.bottom).offset(32)
-    //            make.centerX.equalToSuperview()
-    //        }
-    //    }
-    
-    private func bindViewModel() {
-        
+    private func setupIndicator(){
+        // 로딩 인디케이터
+        activityIndicator.hidesWhenStopped = true
+        view.addSubview(activityIndicator)
+        activityIndicator.snp.makeConstraints { make in
+            make.center.equalToSuperview()
+        }
     }
-    //
-    //    @objc private func navigateToSearch() {
-    //        let searchVC = SearchViewController()
-    //        navigationController?.pushViewController(searchVC, animated: true)
-    //    }
+    
+    private func bindWeatherViewModel() {
+        // 뷰모델의 weatherData와 컬렉션뷰를 바인딩
+        viewModel.weatherData
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] _ in
+                self?.collectionView.reloadData()  // 데이터가 변경될 때 컬렉션뷰 업데이트
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private func bindLoadingState() {
+        // 로딩 상태를 UI에 반영
+        viewModel.isLoading
+            .asDriver()
+            .drive(activityIndicator.rx.isAnimating)
+            .disposed(by: disposeBag)
+    }
+    
+    private func bindErrorState(){
+        // 에러 메시지를 UI에 표시
+        viewModel.errorMessage
+            .asDriver(onErrorJustReturn: "")
+        // .drive(errorLabel.rx.text)
+        // .disposed(by: disposeBag)
+    }
 }
-
 extension WeatherViewController: UICollectionViewDelegateFlowLayout {
     
     
@@ -168,208 +185,40 @@ extension WeatherViewController: UICollectionViewDataSource {
         switch indexPath.item {
         case 0:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CityTodayInfoCell", for: indexPath) as! CityTodayInfoCell
-            let weatherModel = WeatherModel(
-                cod: "200",
-                message: 0,
-                cnt: 1,
-                weatherList: [WeatherList(
-                    dt: 123456789,
-                    main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                    weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                    clouds: Clouds(all: 0),
-                    wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                    visibility: 10000,
-                    pop: 0,
-                    rain: nil,
-                    sys: Sys(pod: "d"),
-                    dtTxt: "2024-10-06 15:00:00"
-                )],
-                cityInfo: City(id: 1, name: "Seoul", coord: Coord(lat: 37.5665, lon: 126.9780), country: "KR", population: 1000000, timezone: 32400, sunrise: 1600000000, sunset: 1600050000))
-            cell.configure(with: weatherModel)
+            
+            if let data = viewModel.weatherData.value {
+                cell.configure(with: data)
+            }
             return cell
         case 1:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "HourlyWeatherCell", for: indexPath) as! HourlyWeatherCell
-            let weatherModel = [WeatherList(
-                dt: 123456789,
-                main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                clouds: Clouds(all: 0),
-                wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                visibility: 10000,
-                pop: 0,
-                rain: nil,
-                sys: Sys(pod: "d"),
-                dtTxt: "2024-10-06 15:00:00"
-            ), WeatherList(
-                dt: 123456789,
-                main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                clouds: Clouds(all: 0),
-                wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                visibility: 10000,
-                pop: 0,
-                rain: nil,
-                sys: Sys(pod: "d"),
-                dtTxt: "2024-10-06 15:00:00"
-            ),WeatherList(
-                dt: 123456789,
-                main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                clouds: Clouds(all: 0),
-                wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                visibility: 10000,
-                pop: 0,
-                rain: nil,
-                sys: Sys(pod: "d"),
-                dtTxt: "2024-10-06 15:00:00"
-            ),WeatherList(
-                dt: 123456789,
-                main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                clouds: Clouds(all: 0),
-                wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                visibility: 10000,
-                pop: 0,
-                rain: nil,
-                sys: Sys(pod: "d"),
-                dtTxt: "2024-10-06 15:00:00"
-            ),WeatherList(
-                dt: 123456789,
-                main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                clouds: Clouds(all: 0),
-                wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                visibility: 10000,
-                pop: 0,
-                rain: nil,
-                sys: Sys(pod: "d"),
-                dtTxt: "2024-10-06 15:00:00"
-            )]
-            cell.configure(with: weatherModel)
+            
+            if let data = viewModel.weatherData.value {
+                print("데이터 전달")
+                cell.configure(with: data.list)
+            }
             return cell
         case 2:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FiveDayInfoCell", for: indexPath) as! FiveDayInfoCell
-            let weatherModel = [WeatherList(
-                dt: 123456789,
-                main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                clouds: Clouds(all: 0),
-                wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                visibility: 10000,
-                pop: 0,
-                rain: nil,
-                sys: Sys(pod: "d"),
-                dtTxt: "2024-10-06 15:00:00"
-            ), WeatherList(
-                dt: 123456789,
-                main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                clouds: Clouds(all: 0),
-                wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                visibility: 10000,
-                pop: 0,
-                rain: nil,
-                sys: Sys(pod: "d"),
-                dtTxt: "2024-10-06 15:00:00"
-            ),WeatherList(
-                dt: 123456789,
-                main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                clouds: Clouds(all: 0),
-                wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                visibility: 10000,
-                pop: 0,
-                rain: nil,
-                sys: Sys(pod: "d"),
-                dtTxt: "2024-10-06 15:00:00"
-            ),WeatherList(
-                dt: 123456789,
-                main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                clouds: Clouds(all: 0),
-                wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                visibility: 10000,
-                pop: 0,
-                rain: nil,
-                sys: Sys(pod: "d"),
-                dtTxt: "2024-10-06 15:00:00"
-            ),WeatherList(
-                dt: 123456789,
-                main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                clouds: Clouds(all: 0),
-                wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                visibility: 10000,
-                pop: 0,
-                rain: nil,
-                sys: Sys(pod: "d"),
-                dtTxt: "2024-10-06 15:00:00"
-            )]
-            cell.configure(with: weatherModel)
+            //            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FiveDayInfoCell", for: indexPath) as! FiveDayInfoCell
+            //            if let data = viewModel.weatherData.value {
+            //                cell.configure(with: data.list)
+            //            }
+            //            return cell
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "HourlyWeatherCell", for: indexPath) as! HourlyWeatherCell
+            
+            if let data = viewModel.weatherData.value {
+                print("데이터 전달")
+                cell.configure(with: data.list)
+            }
             return cell
         case 3:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapViewCell", for: indexPath) as! MapViewCell
             return cell
         case 4:
-            
-            let weatherModel = [WeatherList(
-                dt: 123456789,
-                main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                clouds: Clouds(all: 0),
-                wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                visibility: 10000,
-                pop: 0,
-                rain: nil,
-                sys: Sys(pod: "d"),
-                dtTxt: "2024-10-06 15:00:00"
-            ), WeatherList(
-                dt: 123456789,
-                main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                clouds: Clouds(all: 0),
-                wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                visibility: 10000,
-                pop: 0,
-                rain: nil,
-                sys: Sys(pod: "d"),
-                dtTxt: "2024-10-06 15:00:00"
-            ),WeatherList(
-                dt: 123456789,
-                main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                clouds: Clouds(all: 0),
-                wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                visibility: 10000,
-                pop: 0,
-                rain: nil,
-                sys: Sys(pod: "d"),
-                dtTxt: "2024-10-06 15:00:00"
-            ),WeatherList(
-                dt: 123456789,
-                main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                clouds: Clouds(all: 0),
-                wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                visibility: 10000,
-                pop: 0,
-                rain: nil,
-                sys: Sys(pod: "d"),
-                dtTxt: "2024-10-06 15:00:00"
-            ),WeatherList(
-                dt: 123456789,
-                main: Main(temp: 20.0, feelsLike: 19.0, tempMin: 18.0, tempMax: 22.0, pressure: 1013, seaLevel: 1013, grndLevel: 1013, humidity: 75, tempKf: 0),
-                weather: [Weather(id: 1, main: "Clear", description: "맑음", icon: "01d")],
-                clouds: Clouds(all: 0),
-                wind: Wind(speed: 3.0, deg: 150, gust: 4.0),
-                visibility: 10000,
-                pop: 0,
-                rain: nil,
-                sys: Sys(pod: "d"),
-                dtTxt: "2024-10-06 15:00:00"
-            )]
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "OtherInfoCell", for: indexPath) as! OtherInfoCell
-            cell.configure(with: weatherModel)
+            if let data = viewModel.weatherData.value {
+                cell.configure(with: data.list)
+            }
             return cell
         default:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CityTodayInfoCell", for: indexPath) as! CityTodayInfoCell
@@ -377,25 +226,3 @@ extension WeatherViewController: UICollectionViewDataSource {
         }
     }
 }
-//        switch viewModel.sections {
-//        case .today:
-//            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CityTodayInfoCell", for: indexPath) as! CityTodayInfoCell
-//            cell.configure(with: WeatherModel(cod: "200", message: 0, cnt: 40, weatherList: [WeatherList(dt: 1661871600, main: Main(temp: 296.76, feelsLike: 296.98, tempMin: 296.76, tempMax: 297.87, pressure: 1015, seaLevel: 1015, grndLevel: 933, humidity: 69, tempKf: -1.11), weather: [Weather(id: 500, main: "Rain", description: "light ratin", icon: "10d")], clouds: Clouds(all: 100), wind: Wind(speed: 0.62, deg: 349, gust: 1.18), visibility: 10000, pop: 0.32, rain: nil, sys: Sys(pod: "d"), dtTxt: "2022-08-30 15:00:00")], cityInfo: City(id: 3163858, name: "Zocca", coord: Coord(lat: 44.34, lon: 10.99), country: "IT", population: 4593, timezone: 7200, sunrise: 1661834187, sunset: 1661882248)))
-//            return cell
-//        case .twoDays:
-//            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "HourlyWeatherCell", for: indexPath) as! HourlyWeatherCell
-//            cell.configure(with: [HourlyWeatherModel(time: "20:00", temperature: "328")])
-//            return cell
-//        case .fiveDays:
-//            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "HourlyWeatherCell", for: indexPath) as! HourlyWeatherCell
-//            return cell
-//        case .location:
-//            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CurrentLocationCell", for: indexPath) as! CurrentLocationCell
-//            return cell
-//        case .WindSpeed:
-//            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CurrentLocationCell", for: indexPath) as! CurrentLocationCell
-//            return cell
-//        case .humidityWithCloud:
-//            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CurrentLocationCell", for: indexPath) as! CurrentLocationCell
-//            return cell
-//        }
