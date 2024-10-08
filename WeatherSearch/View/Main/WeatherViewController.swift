@@ -23,7 +23,7 @@ final class WeatherViewController: UIViewController {
     
     private let weatherContentView = UIView() // 기본 날씨 화면
     let searchBarTapped = PublishSubject<Void>()  // 검색바 클릭 이벤트
-
+    
     //가장 큰 틀
     private var collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
     
@@ -169,7 +169,9 @@ extension WeatherViewController: UICollectionViewDelegateFlowLayout {
         case 2:
             return CGSize(width: collectionView.frame.width, height: 250) // MapView
         case 3:
-            return CGSize(width: collectionView.frame.width, height: 180) // Five Day Forecast
+            return CGSize(width: collectionView.frame.width, height: collectionView.frame.width) // Five Day Forecast
+        case 4:
+            return CGSize(width: collectionView.frame.width, height: collectionView.frame.width) // Five Day Forecast
         default:
             return CGSize(width: collectionView.frame.width, height: 100)
         }
@@ -195,25 +197,22 @@ extension WeatherViewController: UICollectionViewDataSource {
             //이틀치의 데이터만 전달
             if let data = viewModel.weatherData.value {
                 print("데이터 전달")
-              let sliced =  data.list.prefix(18)
+                let sliced =  data.list.prefix(18)
                 cell.configure(with: Array(sliced))
             }
             return cell
         case 2:
-            //            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FiveDayInfoCell", for: indexPath) as! FiveDayInfoCell
-            //            if let data = viewModel.weatherData.value {
-            //                cell.configure(with: data.list)
-            //            }
-            //            return cell
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "HourlyWeatherCell", for: indexPath) as! HourlyWeatherCell
-            
-            if let data = viewModel.weatherData.value {
-                print("데이터 전달")
-                cell.configure(with: data.list)
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FiveDayInfoCell", for: indexPath) as! FiveDayInfoCell
+            if let data = viewModel.weatherData.value
+            {
+                cell.configure(with: viewModel.dailyWeatherData.value)
             }
             return cell
         case 3:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapViewCell", for: indexPath) as! MapViewCell
+            if let data = viewModel.weatherData.value {
+                cell.configure(with: data.city.coord)
+            }
             return cell
         case 4:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "OtherInfoCell", for: indexPath) as! OtherInfoCell

@@ -15,7 +15,7 @@ final class FiveDayInfoCell: UICollectionViewCell {
         let label = UILabel()
         label.text = "5일간의 일기예보"
         label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-        label.textAlignment = .center
+        label.textAlignment = .left
         label.textColor = .white
         return label
     }()
@@ -46,18 +46,18 @@ final class FiveDayInfoCell: UICollectionViewCell {
     private func createWeatherView(day: String, icon: UIImage?, min: String, max: String) -> UIStackView {
         let stackView = UIStackView()
         stackView.axis = .horizontal
-        stackView.alignment = .center
+        stackView.alignment = .fill
         stackView.spacing = 10
         
         //요일
         let dayLabel = UILabel()
         dayLabel.text = day
         dayLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-        dayLabel.textAlignment = .center
+        dayLabel.textAlignment = .left
         
         //아이콘
         let iconImageView = UIImageView()
-        iconImageView.image = UIImage(systemName: "sun.max.fill")
+        iconImageView.image = icon
         iconImageView.contentMode = .scaleAspectFit
         iconImageView.snp.makeConstraints { make in
             make.width.height.equalTo(30)
@@ -66,8 +66,8 @@ final class FiveDayInfoCell: UICollectionViewCell {
         //최소, 최대
         let tempLabel = UILabel()
         tempLabel.text = "최소:\(min) 최대:\(max)"
-        tempLabel.font = UIFont.systemFont(ofSize: 16, weight: .bold)
-        tempLabel.textAlignment = .center
+        tempLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        tempLabel.textAlignment = .right
         
         //stackview에 추가
         stackView.addArrangedSubview(dayLabel)
@@ -84,29 +84,23 @@ final class FiveDayInfoCell: UICollectionViewCell {
         }
     }
     
-    func configure(with weatherData: [WeatherList]) {
+    func configure(with weatherData: [(dayOfWeek: String, tempMax: Double, tempMin: Double, weatherIcon: String)]) {
         // 기존 스택뷰의 모든 서브뷰 제거 (중복 추가 방지)
              stackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
              
              // 타이틀 다시 추가
              stackView.addArrangedSubview(title)
              
-             // 새로운 날씨 데이터를 스택뷰에 추가
-             self.weatherData = weatherData
-             for data in weatherData {
-                 let weatherView = createWeatherView(day: "오늘", icon: UIImage(systemName: "sun.max.fill"), min: String(data.main.tempMin), max: String(data.main.tempMax))
+        for i in 0..<5 {
+            var day = ""
+            if i == 0 {
+                day = "오늘"
+            }else{
+                day = weatherData[i].dayOfWeek
+            }
+            let image = UIImage(named: weatherData[i].weatherIcon)
+            let weatherView = createWeatherView(day:day, icon: image, min: String(weatherData[i].tempMin), max: String(weatherData[i].tempMax))
                  stackView.addArrangedSubview(weatherView)
              }
          }
-    
-    
-    func currentDate(){
-      var startDate = self.weatherData[0].dtTxt
-        var startDateType = startDate.isoStringToDate(dateString: startDate)
-        
-        for i in 0..<5 {
-            let newDay = startDateType?.addOneDay()
-            
-        }
-    }
 }

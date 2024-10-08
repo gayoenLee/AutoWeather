@@ -61,6 +61,14 @@ extension Date {
         calendar.timeZone = TimeZone(identifier: "UTC")!  // UTC 시간대 설정
         return calendar.date(byAdding: .day, value: 1, to: self)  // 하루 더하기
     }
+    
+    // 날짜에 맞는 요일 반환
+      func dayOfWeek() -> String {
+          let dateFormatter = DateFormatter()
+          dateFormatter.locale = Locale(identifier: "ko_KR")
+          dateFormatter.dateFormat = "EEEE"
+          return dateFormatter.string(from: self)
+      }
 }
 
 extension String {

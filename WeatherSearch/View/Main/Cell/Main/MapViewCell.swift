@@ -14,17 +14,18 @@ final class MapViewCell: UICollectionViewCell {
     private let mapView = MKMapView()
     private let title : UILabel = {
         let label = UILabel()
-        label.text = "지도"
+        label.text = "위치"
         label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         label.textAlignment = .left
         label.textColor = .white
         return label
     }()
+    var location: Coord?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         contentView.addSubview(title)
-        setupMapView()
+        contentView.addSubview(mapView)
         setupConstraints()
     }
     
@@ -33,20 +34,22 @@ final class MapViewCell: UICollectionViewCell {
     }
     
     private func setupMapView() {
-        
         mapView.mapType = .standard
         mapView.isZoomEnabled = true
         mapView.isScrollEnabled = true
-        /*
-          최초 데이터 기준  “{"id":1839726,"name":"Asan","country":"KR","coord":{"lon":127.004173,"lat":36.783611}} 로 표시
-         */
-        //초기 위치 설정
-        let initialLocation = CLLocation(latitude: 36.783611, longitude: 127.004173)
+        
+        guard let location = location else { return }
+        let initialLocation = CLLocation(latitude: location.lat, longitude: location.lon)
         let regionRadius: CLLocationDistance = 1000
         let coordinateRegion = MKCoordinateRegion(center: initialLocation.coordinate, latitudinalMeters: regionRadius, longitudinalMeters: regionRadius)
         mapView.setRegion(coordinateRegion, animated: true)
-        
-        contentView.addSubview(mapView)
+        addMarker(at: CLLocationCoordinate2D(latitude: location.lat, longitude: location.lon))
+    }
+    
+    func configure(with coordData: Coord) {
+        self.location = coordData
+        setupMapView()
+
     }
     
     private func setupConstraints() {
@@ -62,10 +65,10 @@ final class MapViewCell: UICollectionViewCell {
         }
     }
     
-    func addMarker(at coordinate: CLLocationCoordinate2D, title: String, subtitle: String) {
+    
+    
+    private func addMarker(at coordinate: CLLocationCoordinate2D) {
         let annotation = MKPointAnnotation()
-        annotation.title = title
-        annotation.subtitle = subtitle
         annotation.coordinate = coordinate
         mapView.addAnnotation(annotation)
     }

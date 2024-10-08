@@ -51,12 +51,6 @@ final class HourlyWeatherCell: UICollectionViewCell {
         scrollView.addSubview(horizontalStackView)
         contentView.addSubview(windSpeedLabel)  // 상단 문장 추가
         contentView.addSubview(scrollView)      // 하단 스크롤 뷰 추가
-        
-        // 데이터에 따른 뷰 생성
-//        for weather in hourlyWeatherData {
-//            let weatherView = createWeatherView(time: weather.dtTxt, icon: UIImage(named: "sun.max.fill")!, temperature: String(weather.main.temp))
-//            horizontalStackView.addArrangedSubview(weatherView)
-//        }
     }
     
     // 시간, 아이콘, 기온을 세로로 쌓는 StackView 생성
@@ -135,7 +129,7 @@ final class HourlyWeatherCell: UICollectionViewCell {
         }
     }
     
-    func filterData() -> [WeatherList]? {
+    private func filterData() -> [WeatherList]? {
         // 현재 한국 시간을 구함
         let currentDate = Date()
         print("현재 한국 시간: \(currentDate)")
@@ -159,7 +153,7 @@ final class HourlyWeatherCell: UICollectionViewCell {
         return nil
     }
        
-    func convertTimeToLabel(time: String) -> String{
+    private func convertTimeToLabel(time: String) -> String{
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "a h시"
         dateFormatter.locale = Locale(identifier: "ko_KR")
@@ -168,7 +162,7 @@ final class HourlyWeatherCell: UICollectionViewCell {
         return time.convertISOToKoreanTime(isoString: time)
     }
     
-    func getWeatherIcon(id: Int) -> String {
+    private func getWeatherIcon(id: Int) -> String {
         switch id {
         case 200...232:
             return "11d"
