@@ -49,32 +49,33 @@ final class GridWeatherView: UICollectionViewCell {
     }
     
     
-      required init?(coder: NSCoder) {
-          fatalError("init(coder:) has not been implemented")
-      }
-      
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     
     private func setupView() {
         addSubview(stackView)
-              
-              // Add two rows to stackView
-              firstRowStackView.addArrangedSubview(humidityView)
-              firstRowStackView.addArrangedSubview(cloudView)
-              secondRowStackView.addArrangedSubview(windSpeedView)
-              secondRowStackView.addArrangedSubview(pressureView)
-              
-              stackView.addArrangedSubview(firstRowStackView)
-              stackView.addArrangedSubview(secondRowStackView)
-              
-              stackView.snp.makeConstraints { make in
-                  make.edges.equalToSuperview().inset(16)
-              }
-          }
+        
+        // Add two rows to stackView
+        firstRowStackView.addArrangedSubview(humidityView)
+        firstRowStackView.addArrangedSubview(cloudView)
+        secondRowStackView.addArrangedSubview(windSpeedView)
+        secondRowStackView.addArrangedSubview(pressureView)
+        
+        stackView.addArrangedSubview(firstRowStackView)
+        stackView.addArrangedSubview(secondRowStackView)
+        
+        stackView.snp.makeConstraints { make in
+            make.edges.equalToSuperview().inset(16)
+        }
+    }
     
-    func configure(humidity: String, clouds: String, windSpeed: String) {
-                humidityView.setValue(humidity)
-              cloudView.setValue(clouds)
-              windSpeedView.setValue(windSpeed)
+    func configure(data: AverageWeatherData) {
+        
+        humidityView.setValue(data.humidity)
+        cloudView.setValue(data.clouds)
+        windSpeedView.setValue(data.windSpeed)
     }
     
     

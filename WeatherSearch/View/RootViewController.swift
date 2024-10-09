@@ -16,13 +16,14 @@ final class RootViewController: UINavigationController {
     
     private lazy var weatherViewController: WeatherViewController = {
         let service = WeatherAPIService()
-        let viewModel = WeatherViewModel(weatherService: service, sections: .today)
-        let mainViewController = WeatherViewController(viewModel: viewModel)
+        let viewModel = WeatherDataViewModel(weatherService: service)
+        let searchVM = CitySearchViewModel()
+        let mainViewController = WeatherViewController(viewModel: viewModel, searchVM: searchVM)
         return mainViewController
     }()
     
     private lazy var searchViewController: SearchViewController = {
-        let searchVC = SearchViewController(viewModel: self.weatherViewController.viewModel)
+        let searchVC = SearchViewController(viewModel: self.weatherViewController.viewModel, searchVM: weatherViewController.searchVM)
         return searchVC
     }()
 
@@ -59,13 +60,13 @@ final class RootViewController: UINavigationController {
     private func selectedSearchCity() {
    
         //search에서 도시 선택시 weatherVC로 데이터 전달
-        searchViewController.didSelectCity
+        weatherViewController.viewModel.searchCity
             .distinctUntilChanged()
                 .subscribe(onNext: { [weak self] city in
                     guard let self = self else { return }
-                    print("도시 선택해서 루트에서 받음: \(city)")
+                    print("도시 선택해서 루트에서 받음: \(String(describing: city))")
                     
-                      self.weatherViewController.selectedInSearchBar(with: city)
+//                      self.weatherViewController.selectedInSearchBar(with: city)
                       self.popViewController(animated: true) 
 
                   })

@@ -15,13 +15,15 @@ final class SearchViewController: UIViewController {
     let searchText = BehaviorRelay<String>(value: "")
     private let searchBar = UISearchBar()
    private let tableView = UITableView()
-    private let viewModel: WeatherViewModel
+    private let viewModel: WeatherDataViewModel
+    private let searchVM: CitySearchViewModel
        private let disposeBag = DisposeBag()
      var didSelectCity = PublishSubject<SearchCity>()
     
     
-    init(viewModel: WeatherViewModel) {
+    init(viewModel: WeatherDataViewModel, searchVM: CitySearchViewModel) {
         self.viewModel = viewModel
+        self.searchVM = searchVM
         super.init(nibName: nil, bundle: nil)
 
     }
@@ -35,7 +37,7 @@ final class SearchViewController: UIViewController {
            self.navigationController?.interactivePopGestureRecognizer?.isEnabled = false
            self.navigationItem.hidesBackButton = true
            self.view.backgroundColor = .bgColor
-           viewModel.loadCityData()
+           searchVM.loadCityData()
            setupUI()
            setupConstraints()
            bindTableView()
@@ -50,13 +52,6 @@ final class SearchViewController: UIViewController {
             view.addSubview(tableView)
             tableView.backgroundColor = .bgColor
             tableView.register(CustomCityCell.self, forCellReuseIdentifier: "CustomCityCell")
-        
-        /*
-         // 검색바를 위로 이동시키는 애니메이션
-//            self.searchBar.snp.updateConstraints { make in
-//                make.top.equalTo(self.view.safeAreaLayoutGuide).offset(-30) // 적절한 위치로 이동
-//            }
-         */
             
     }
     
@@ -89,19 +84,18 @@ final class SearchViewController: UIViewController {
                  .distinctUntilChanged()
                  .flatMapLatest { query -> Observable<[CityDataList]> in
                      if query.isEmpty {
-                         return Observable.just(self.viewModel.allCities.value)  // 검색어가 없을 때 전체 도시 반환
+                         return Observable.just(self.searchVM.allCities.value)  // 검색어가 없을 때 전체 도시 반환
                      } else {
-                         let filtered = self.viewModel.allCities.value.filter { $0.name.lowercased().contains(query.lowercased()) }
+                         let filtered = self.searchVM.allCities.value.filter { $0.name.lowercased().contains(query.lowercased()) }
                          return Observable.just(filtered)
                      }
                  }
-                 .bind(to: viewModel.filteredCities)
+                 .bind(to: searchVM.filteredCities)
                  .disposed(by: disposeBag)
     }
         
     // ViewModel과의 바인딩 설정
     private func bindTableView() {
-        
         
         // 테이블뷰의 선택 이벤트 처리
         tableView.rx.modelSelected(CityDataList.self)
@@ -113,13 +107,13 @@ final class SearchViewController: UIViewController {
             .subscribe(onNext: { [weak self] city in
                 guard let self = self else { return }
                 print("주려는 데이터: \(city)")
-                self.didSelectCity.onNext(city)
+                self.viewModel.searchCity.accept(city)
                 print("구독 후 전달된 값: \(city)")
             })
             .disposed(by: disposeBag)
         
         // ViewModel에서 필터링된 도시 리스트를 테이블뷰에 바인딩
-          viewModel.filteredCities
+        searchVM.filteredCities
             .distinctUntilChanged()
             .bind(to: tableView.rx.items(cellIdentifier: "CustomCityCell", cellType: CustomCityCell.self)) { index, city, cell in
                 cell.configure(cityName: city.name, country: city.country)

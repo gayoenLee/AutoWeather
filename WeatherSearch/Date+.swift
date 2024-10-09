@@ -8,14 +8,6 @@
 import Foundation
 
 extension Date {
-    func getCurrentDate() -> String {
-            let now = Date()
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd HH:mm"
-            dateFormatter.locale = Locale(identifier: "ko_KR")
-        dateFormatter.timeZone = TimeZone(abbreviation: "KST")
-            return dateFormatter.string(from: self)
-        }
     
     // 한국 시간을 UTC로 변환하는 함수
     func toUTC() -> (Date?,Date?) {
@@ -101,5 +93,14 @@ extension String {
         
         // 3. 변환된 한국 시간 반환
         return dateFormatter.string(from: date)
+    }
+    
+     func convertTimeToLabel(time: String) -> String{
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "a h시"
+        dateFormatter.locale = Locale(identifier: "ko_KR")
+        
+        // Unix 타임스탬프를 사용하여 Date 객체 생성
+        return time.convertISOToKoreanTime(isoString: time)
     }
 }

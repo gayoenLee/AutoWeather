@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct WeatherModel: Decodable {
+struct WeatherModel: Decodable, Equatable {
     
     let cod: String
     let message, cnt: Int
@@ -16,7 +16,7 @@ struct WeatherModel: Decodable {
 }
 
 // MARK: - City
-struct City: Codable {
+struct City: Codable,Equatable {
     let id: Int
     let name: String
     let coord: Coord
@@ -25,12 +25,12 @@ struct City: Codable {
 }
 
 // MARK: - Coord
-struct Coord: Codable {
+struct Coord: Codable,Equatable {
     let lat, lon: Double
 }
 
 // MARK: - List
-struct WeatherList: Codable {
+struct WeatherList: Codable,Equatable {
     let dt: Int
     let main: Main
     let weather: [Weather]
@@ -49,12 +49,12 @@ struct WeatherList: Codable {
 }
 
 // MARK: - Clouds
-struct Clouds: Codable {
+struct Clouds: Codable,Equatable {
     let all: Int
 }
 
 // MARK: - Main
-struct Main: Codable {
+struct Main: Codable,Equatable {
     let temp, feelsLike, tempMin, tempMax: Double
     let pressure, seaLevel, grndLevel, humidity: Int
     let tempKf: Double
@@ -73,7 +73,7 @@ struct Main: Codable {
 }
 
 // MARK: - Rain
-struct Rain: Codable {
+struct Rain: Codable,Equatable {
     let the3H: Double
 
     enum CodingKeys: String, CodingKey {
@@ -82,12 +82,12 @@ struct Rain: Codable {
 }
 
 // MARK: - Sys
-struct Sys: Codable {
+struct Sys: Codable,Equatable {
     let pod: String
 }
 
 // MARK: - Weather
-struct Weather: Codable {
+struct Weather: Codable,Equatable {
     let id: Int
     let main, description, icon: String
     
@@ -112,7 +112,7 @@ struct Weather: Codable {
 }
 
 // MARK: - Wind
-struct Wind: Codable {
+struct Wind: Codable,Equatable {
     let speed: Double
     let deg: Int
     let gust: Double

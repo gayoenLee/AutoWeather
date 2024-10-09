@@ -84,7 +84,7 @@ final class FiveDayInfoCell: UICollectionViewCell {
         }
     }
     
-    func configure(with weatherData: [(dayOfWeek: String, tempMax: Double, tempMin: Double, weatherIcon: String)]) {
+    func configure(with weatherData: [DailyWeatherData]) {
         // 기존 스택뷰의 모든 서브뷰 제거 (중복 추가 방지)
              stackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
              
@@ -98,7 +98,7 @@ final class FiveDayInfoCell: UICollectionViewCell {
             }else{
                 day = weatherData[i].dayOfWeek
             }
-            let image = UIImage(named: weatherData[i].weatherIcon)
+            let image = UIImage(named: weatherData[i].icon)
             let weatherView = createWeatherView(day:day, icon: image, min: String(weatherData[i].tempMin), max: String(weatherData[i].tempMax))
                  stackView.addArrangedSubview(weatherView)
              }

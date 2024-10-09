@@ -9,25 +9,25 @@ import SnapKit
 import UIKit
 
 
-protocol WeatherViewDelegate: UICollectionViewDelegate {
-    
-}
-
-protocol WeatherViewDataSource: UICollectionViewDataSource {
-    
-}
-
-final class WeatherView: UIView {
-    
-    weak var delegate: WeatherViewDelegate? {
-        didSet { self.collectionView.delegate = self.delegate }
-    }
-    
-    weak var dataSource: WeatherViewDataSource? {
-        didSet { self.collectionView.dataSource = self.dataSource}
-    }
-    
-    
-    private let collectionView = UICollectionView(frame: .zero)
-    
-}
+//protocol WeatherViewDelegate: UICollectionViewDelegate {
+//    
+//}
+//
+//protocol WeatherViewDataSource: UICollectionViewDataSource {
+//    
+//}
+//
+//final class WeatherView: UIView {
+//    
+//    weak var delegate: WeatherViewDelegate? {
+//        didSet { self.collectionView.delegate = self.delegate }
+//    }
+//    
+//    weak var dataSource: WeatherViewDataSource? {
+//        didSet { self.collectionView.dataSource = self.dataSource}
+//    }
+//    
+//    
+//    private let collectionView = UICollectionView(frame: .zero)
+//    
+//}

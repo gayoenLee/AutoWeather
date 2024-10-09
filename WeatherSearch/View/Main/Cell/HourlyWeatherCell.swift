@@ -54,7 +54,7 @@ final class HourlyWeatherCell: UICollectionViewCell {
     }
     
     // 시간, 아이콘, 기온을 세로로 쌓는 StackView 생성
-    private func createWeatherView(time: String, icon: UIImage?, temperature: String) -> UIStackView {
+    private func createWeatherView(data: ThreeHourWeatherData) -> UIStackView {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.alignment = .center
@@ -62,14 +62,14 @@ final class HourlyWeatherCell: UICollectionViewCell {
         
         // 시간 라벨
         let timeLabel = UILabel()
-        timeLabel.text = time
+        timeLabel.text = data.time
         timeLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         timeLabel.textAlignment = .left
         
         // 날씨 아이콘 이미지
         //let iconImageView = UIImageView()
         let iconImageView = UIImageView()
-        iconImageView.image = icon
+        iconImageView.image = UIImage(named: data.iconName)
         iconImageView.contentMode = .scaleAspectFit
         iconImageView.snp.makeConstraints { make in
             make.width.height.equalTo(30)
@@ -77,7 +77,7 @@ final class HourlyWeatherCell: UICollectionViewCell {
         
         // 기온 라벨
         let tempLabel = UILabel()
-        tempLabel.text = temperature
+        tempLabel.text = "\(data.temperature)°"
         tempLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         tempLabel.textAlignment = .center
         
@@ -109,85 +109,14 @@ final class HourlyWeatherCell: UICollectionViewCell {
     }
     
     // 데이터 설정 메서드
-    func configure(with hourlyWeatherData: [WeatherList]) {
-        self.hourlyWeatherData = hourlyWeatherData
-        let s = hourlyWeatherData.map({ $0.dtTxt})
-        let data = filterData()
-  
-        var labelTxt = ""
-        guard let data = data else { return }
-        for (idx,weather) in data.enumerated() {
-            if idx == 0 {
-                labelTxt = "지금"
-            }else{
-                labelTxt = convertTimeToLabel(time: weather.dtTxt)
-            }
-            let temperature = String(weather.main.temp)
-            let iconName = getWeatherIcon(id: weather.weather[0].id)
-            let weatherView = createWeatherView(time: labelTxt, icon: UIImage(named: iconName), temperature: "\(temperature)°")
-            horizontalStackView.addArrangedSubview(weatherView)
-        }
-    }
-    
-    private func filterData() -> [WeatherList]? {
-        // 현재 한국 시간을 구함
-        let currentDate = Date()
-        print("현재 한국 시간: \(currentDate)")
-        let convertedData = currentDate.toUTC()
-        if let minDate = convertedData.0, let minHour = convertedData.1{
-            print("최소: \(minDate), 시각만: \(minHour)") // 시간만(hour) 가져와서 비교
-            
-            let maxTime = minDate.addOneDay()!
-            print("최대: \(maxTime)")
-            
-                let filteredData = self.hourlyWeatherData.compactMap({ weather in
-                if let val = weather.dtTxt.isoStringToDate(dateString: weather.dtTxt) {
-                    if minHour <= val && val <= maxTime {
-                        return weather
-                    }
-                }
-                return nil
-            })
-            return filteredData
-        }
-        return nil
-    }
-       
-    private func convertTimeToLabel(time: String) -> String{
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "a h시"
-        dateFormatter.locale = Locale(identifier: "ko_KR")
+    func configure(with hourlyWeatherData: [ThreeHourWeatherData]) {
+        // 기존 스택뷰의 모든 서브뷰 제거
+           horizontalStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
         
-        // Unix 타임스탬프를 사용하여 Date 객체 생성
-        return time.convertISOToKoreanTime(isoString: time)
-    }
-    
-    private func getWeatherIcon(id: Int) -> String {
-        switch id {
-        case 200...232:
-            return "11d"
-        case 300...321:
-            return "09d"
-        case 500...504:
-            return "10d"
-        case 511:
-            return "13d"
-        case 520...531:
-            return "09d"
-        case 600...622:
-            return "13d"
-        case 701...781:
-            return "50d"
-        case 800:
-            return "01d"
-        case 801:
-            return "02d"
-        case 802:
-            return "03d"
-        case 803...804:
-            return "04d"
-        default:
-            return "알 수 없음"
+        for data in hourlyWeatherData {
+            let iconImage = UIImage(named: data.iconName)
+            let weatherView = createWeatherView(data: data)
+            horizontalStackView.addArrangedSubview(weatherView)
         }
     }
 }
