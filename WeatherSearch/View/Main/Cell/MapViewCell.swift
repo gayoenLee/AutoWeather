@@ -20,7 +20,7 @@ final class MapViewCell: UICollectionViewCell {
         label.textColor = .white
         return label
     }()
-    var location: Coord?
+    var location: MapLocationData?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -39,14 +39,14 @@ final class MapViewCell: UICollectionViewCell {
         mapView.isScrollEnabled = true
         
         guard let location = location else { return }
-        let initialLocation = CLLocation(latitude: location.lat, longitude: location.lon)
+        let initialLocation = CLLocation(latitude: Double(location.lat)!, longitude: Double(location.lon)!)
         let regionRadius: CLLocationDistance = 1000
         let coordinateRegion = MKCoordinateRegion(center: initialLocation.coordinate, latitudinalMeters: regionRadius, longitudinalMeters: regionRadius)
         mapView.setRegion(coordinateRegion, animated: true)
-        addMarker(at: CLLocationCoordinate2D(latitude: location.lat, longitude: location.lon))
+        addMarker(at: CLLocationCoordinate2D(latitude: Double(location.lat)!, longitude:Double(location.lon)!))
     }
     
-    func configure(with coordData: Coord) {
+    func configure(with coordData: MapLocationData) {
         self.location = coordData
         setupMapView()
 

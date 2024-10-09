@@ -32,11 +32,11 @@ final class WeatherViewController: UIViewController {
     private let containerView = UIView() // SearchBar 아래에 들어갈 컨테이너 뷰
     
     let searchBarTapped = PublishSubject<Void>()  // 검색바 클릭 이벤트
-    
+    let dataSource = WeatherCollectionViewDataSource()
     //가장 큰 틀
     private var collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
     
-    init(viewModel: WeatherDataViewModel, searchVM: CitySearchViewModel) {
+    init(viewModel: WeatherDataViewModel, searchVM: CitySearchViewModel ) {
         self.viewModel = viewModel
         self.searchVM = searchVM
         super.init(nibName: nil, bundle: nil)
@@ -55,64 +55,14 @@ final class WeatherViewController: UIViewController {
         setupContainerView()
         setupCollectionView()
         setupIndicator()
-        bindWeatherViewModel()
+    
         bindSearchBar()
+        bindSearchSelected()
         bindLoadingState()
-        //bindCollectionViewData()
+        bindWeatherDataVM()
         navigationItem.hidesBackButton = true
     }
     
-    private func bindCollectionViewData() {
-           // 오늘의 도시 정보 데이터 바인딩
-           viewModel.todayCityInfoData
-               .compactMap { $0 }
-               .asDriver(onErrorJustReturn: TodayCityInfoData(cityName: "", temperature: "", weatherStatue: "", tempMax: "", tempMin: ""))
-               .drive(onNext: { [weak self] data in
-                   guard let self = self, let cell = self.collectionView.cellForItem(at: IndexPath(item: 0, section: 0)) as? CityTodayInfoCell else { return }
-                   cell.configure(with: data)
-               })
-               .disposed(by: disposeBag)
-           
-           // 3시간 간격 날씨 데이터 바인딩
-           viewModel.threeHourData
-               .compactMap { $0 }
-               .map { [$0] }
-               .asDriver(onErrorJustReturn: [])
-               .drive(collectionView.rx.items(cellIdentifier: "HourlyWeatherCell", cellType: HourlyWeatherCell.self)) { index, data, cell in
-                   cell.configure(with: data)
-               }
-               .disposed(by: disposeBag)
-           
-           // 5일간 날씨 데이터 바인딩
-           viewModel.dailyWeatherData
-               .compactMap { $0 }
-               .map { [$0] }
-               .asDriver(onErrorJustReturn: [])
-               .drive(collectionView.rx.items(cellIdentifier: "FiveDayInfoCell", cellType: FiveDayInfoCell.self)) { index, data, cell in
-                   cell.configure(with: data)
-               }
-               .disposed(by: disposeBag)
-
-           // 지도 좌표 데이터 바인딩
-        viewModel.weatherData
-            .compactMap { $0?.city.coord }
-               .asDriver(onErrorJustReturn: Coord(lat: 0.0, lon: 0.0))
-               .drive(onNext: { [weak self] coord in
-                   guard let self = self, let cell = self.collectionView.cellForItem(at: IndexPath(item: 3, section: 0)) as? MapViewCell else { return }
-                   cell.configure(with: coord)
-               })
-               .disposed(by: disposeBag)
-
-           // 평균 데이터 (습도, 구름, 바람) 바인딩
-           viewModel.averageData
-               .compactMap { $0 }
-               .asDriver(onErrorJustReturn: AverageWeatherData(humidity: "", clouds: "", windSpeed: ""))
-               .drive(onNext: { [weak self] data in
-                   guard let self = self, let cell = self.collectionView.cellForItem(at: IndexPath(item: 4, section: 0)) as? GridWeatherView else { return }
-                   cell.configure(data: data)
-               })
-               .disposed(by: disposeBag)
-       }
    
     private func bindSearchBar() {
         searchBar.rx.textDidBeginEditing
@@ -140,21 +90,9 @@ final class WeatherViewController: UIViewController {
     }
     
     private func setupCollectionView() {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .vertical
-        
-        collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
-        
-        // 셀 등록
-        collectionView.register(CityTodayInfoCell.self, forCellWithReuseIdentifier: "CityTodayInfoCell")
-        collectionView.register(HourlyWeatherCell.self, forCellWithReuseIdentifier: "HourlyWeatherCell")
-        collectionView.register(FiveDayInfoCell.self, forCellWithReuseIdentifier: "FiveDayInfoCell")
-        collectionView.register(MapViewCell.self, forCellWithReuseIdentifier: "MapViewCell")
-        collectionView.register(GridWeatherView.self, forCellWithReuseIdentifier: "GridWeatherView")
-        collectionView.collectionViewLayout = layout
-        collectionView.delegate = self
-        collectionView.dataSource = self
-        collectionView.backgroundColor = .bgColor
+        collectionView = WeatherViewFactory.createCollectionView()
+        collectionView.delegate = dataSource
+        collectionView.dataSource = dataSource
         
         containerView.addSubview(collectionView)
         collectionView.snp.makeConstraints { make in
@@ -172,17 +110,29 @@ final class WeatherViewController: UIViewController {
         }
     }
     
-    private func bindWeatherViewModel() {
+    private func bindSearchSelected() {
+        // 검색 도시 weatherViewModel에 전달
+        searchVM.searchCitySelected
+            .bind(to: viewModel.searchCity)
+            .disposed(by: disposeBag)
+    }
+    
+    private func bindWeatherDataVM(){
+        
         // 검색 도시 weatherViewModel에 전달
         searchVM.searchCitySelected
             .bind(to: viewModel.searchCity)
             .disposed(by: disposeBag)
         
-        // 뷰모델의 weatherData와 컬렉션뷰를 바인딩
-        viewModel.weatherData
+        // 오늘의 도시 정보 셀만 업데이트
+        viewModel.fullWeatherData
+            .compactMap { $0 }
             .observe(on: MainScheduler.instance)
-            .subscribe(onNext: { [weak self] _ in
-                self?.collectionView.reloadData()  // 데이터가 변경될 때 컬렉션뷰 업데이트
+            .subscribe(onNext: { [weak self] weatherData in
+                guard let self = self else { return }
+  
+                self.dataSource.update(with: weatherData)
+                collectionView.reloadData()
             })
             .disposed(by: disposeBag)
     }
@@ -193,75 +143,5 @@ final class WeatherViewController: UIViewController {
             .asDriver()
             .drive(activityIndicator.rx.isAnimating)
             .disposed(by: disposeBag)
-    }
-    
-}
-extension WeatherViewController: UICollectionViewDelegateFlowLayout {
-    
-    
-    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        //        return CGSize(width: collectionView.frame.width*0.9, height: 80)
-        switch indexPath.item {
-        case 0:
-            return CGSize(width: collectionView.frame.width, height: 200) // City Info
-        case 1:
-            return CGSize(width: collectionView.frame.width, height: 150) // Hourly Weather
-        case 2:
-            return CGSize(width: collectionView.frame.width, height: 250) // MapView
-        case 3:
-            return CGSize(width: collectionView.frame.width, height: collectionView.frame.width) // Five Day Forecast
-        case 4:
-            return CGSize(width: collectionView.frame.width, height: collectionView.frame.width) // Five Day Forecast
-        default:
-            return CGSize(width: collectionView.frame.width, height: 100)
-        }
-    }
-}
-
-extension WeatherViewController: UICollectionViewDataSource {
-    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 5
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        switch indexPath.item {
-        case 0:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CityTodayInfoCell", for: indexPath) as! CityTodayInfoCell
-            
-            if let data = viewModel.todayCityInfoData.value {
-                cell.configure(with: data)
-            }
-            return cell
-        case 1:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "HourlyWeatherCell", for: indexPath) as! HourlyWeatherCell
-            //이틀치의 데이터만 전달
-            if let data = viewModel.threeHourData.value {
-                print("데이터 전달")
-                cell.configure(with: data)
-            }
-            return cell
-        case 2:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "FiveDayInfoCell", for: indexPath) as! FiveDayInfoCell
-            if let data = viewModel.dailyWeatherData.value
-            {
-                cell.configure(with: data)
-            }
-            return cell
-        case 3:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MapViewCell", for: indexPath) as! MapViewCell
-            if let data = viewModel.weatherData.value {
-                cell.configure(with: data.city.coord)
-            }
-            return cell
-        case 4:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "GridWeatherView", for: indexPath) as! GridWeatherView
-            if let averageData = viewModel.averageData.value {
-                cell.configure(data: averageData)
-            }
-            return cell
-        default:
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CityTodayInfoCell", for: indexPath) as! CityTodayInfoCell
-            return cell
-        }
     }
 }

@@ -64,9 +64,7 @@ final class RootViewController: UINavigationController {
             .distinctUntilChanged()
                 .subscribe(onNext: { [weak self] city in
                     guard let self = self else { return }
-                    print("도시 선택해서 루트에서 받음: \(String(describing: city))")
                     
-//                      self.weatherViewController.selectedInSearchBar(with: city)
                       self.popViewController(animated: true) 
 
                   })

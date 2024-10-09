@@ -15,56 +15,23 @@ enum CityFileError: Error {
     case fileNotFound
 }
 
-
-struct ThreeHourWeatherData {
-    var time: String
-    var iconName: String
-    var temperature: String
-}
-struct AverageWeatherData {
-    var humidity: String
-    var clouds: String
-    var windSpeed: String
-}
-
-struct DailyWeatherData {
-    var dayOfWeek: String
-    var icon: String
-    var tempMax: Double
-    var tempMin: Double
-}
-
-struct TodayCityInfoData {
-    var cityName: String
-    var temperature: String
-    var weatherStatue: String
-    var tempMax: String
-    var tempMin: String
-}
-
 final class WeatherDataViewModel {
     
     private let weatherService: WeatherService
     private let disposeBag = DisposeBag()
     
     // 테이블뷰에 전달할 데이터를 위한 Observable
-    let todayCityInfoData: BehaviorRelay<TodayCityInfoData?> = BehaviorRelay(value: nil)
-    let dailyWeatherData: BehaviorRelay<[DailyWeatherData]?> = BehaviorRelay(value: nil)
-    let averageData = BehaviorRelay<AverageWeatherData?>(value:(nil))
-    let threeHourData: BehaviorRelay<[ThreeHourWeatherData]?> = BehaviorRelay(value: nil)
-    // 전체 날씨 데이터 결과 저장
-    var weatherData = BehaviorRelay<WeatherModel?>(value: nil)
+    let fullWeatherData = BehaviorRelay<FullWeatherData?>(value: nil)
     //도시 이름, 위도 및 경도 입력을 위한 Relay
     var searchCity = BehaviorRelay<SearchCity?>(value: nil)
     
     var isLoading = BehaviorRelay<Bool>(value: false)
     var errorMessage = BehaviorRelay<String?>(value: nil)
-    
+    private let calendar = Calendar.current
     
     init(weatherService: WeatherService) {
         self.weatherService = weatherService
         bindInputToFetchWeather()
-
     }
     
     private func bindInputToFetchWeather() {
@@ -82,9 +49,6 @@ final class WeatherDataViewModel {
                 return self.weatherService.fetchWeather(for: city)
                     .observe(on: ConcurrentDispatchQueueScheduler(qos: .background))
                     .do(onSuccess: { _ in
-                        DispatchQueue.main.async {
-                            self.isLoading.accept(false)
-                        }
 
                         print("Success: Weather data fetched successfully")
                     }, onError: { error in
@@ -97,59 +61,81 @@ final class WeatherDataViewModel {
             }
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: {[weak self] weatherModel in
-                self?.processTodyaCityInfoData(weatherModel)
-                self?.processThreeHourData(Array(weatherModel.list.prefix(18)))
-                self?.processDailyWeatherData(weatherModel)
-                self?.calculateAverageHumidWind(weatherModel.list)
-                self?.weatherData.accept(weatherModel)
                 
+                Task{
+                    let result = await  self?.processDataInBackground(weatherModel)
+                    self?.fullWeatherData.accept(result)
+                    self?.isLoading.accept(false)
+
+                }
             })
             .disposed(by: disposeBag)
     }
     
-    private func processTodyaCityInfoData(_ weatherModel: WeatherModel) {
+    
+    private func processDataInBackground(_ weatherModel: WeatherModel) async -> FullWeatherData? {
+        return await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .background).async {
+                
+                let todayCityInfo = self.processTodyaCityInfoData(weatherModel)
+                
+                // 3시간 데이터 생성 및 전달
+                let threeHourData = self.processThreeHourData(Array(weatherModel.list.prefix(18)))
+                // 일일 데이터 생성 및 전달
+                let dailyWeatherData = self.processDailyWeatherData(weatherModel)
+                let mapData = self.processMapData(weatherModel)
+                
+                // 평균 데이터 생성 및 전달
+                let averageData = self.calculateAverageHumidWind(weatherModel.list)
+                // 가공된 데이터를 모두 모아 FullWeatherData를 생성합니다.
+                let fullWeatherData = FullWeatherData(
+                    todayCityInfo: todayCityInfo,
+                    threeHourData: threeHourData,
+                    dailyWeatherData: dailyWeatherData,
+                    mapLocationData: mapData, averageData: averageData
+                )
+                continuation.resume(returning: fullWeatherData)
+            }
+            
+        }
+    }
+    
+    private func processMapData(_ weatherModel: WeatherModel) -> MapLocationData {
+        return MapLocationData(lat: String(weatherModel.city.coord.lat), lon: String(weatherModel.city.coord.lon))
+    }
+    
+    private func processTodyaCityInfoData(_ weatherModel: WeatherModel) -> TodayCityInfoData {
         let recentData = weatherModel.list[0]
         let name = weatherModel.city.name
         let temperature = String(recentData.main.temp)
         let condition = String(recentData.weather[0].koreanDescription)
         let high = Int(recentData.main.tempMax)
         let low = Int(recentData.main.tempMin)
-        let result = TodayCityInfoData(cityName: name, temperature: temperature, weatherStatue: condition, tempMax: String(high), tempMin: String(low))
-        self.todayCityInfoData.accept(result)
+        return TodayCityInfoData(cityName: name, temperature: temperature, weatherStatue: condition, tempMax: String(high), tempMin: String(low))
     }
     
     
-    private func processThreeHourData(_ weatherList: [WeatherList]) {
+    private func processThreeHourData(_ weatherList: [WeatherList]) -> [ThreeHourWeatherData]? {
         let data = filterDataForTwoDays(weatherList)
-        var result : [ThreeHourWeatherData] = []
-        guard let data = data else { return }
-        for (idx,weather) in data.enumerated() {
-            var time = ""
-            if idx == 0 {
-                time = "지금"
-            }else{
-                time = weather.dtTxt.convertTimeToLabel(time: weather.dtTxt)
-            }
+        guard let data = data else { return nil}
+        
+        let result = data.enumerated().map { (idx, weather) -> ThreeHourWeatherData in
+            let time = idx == 0 ? "지금" : weather.dtTxt.convertTimeToLabel(time: weather.dtTxt)
             let temperature = String(weather.main.temp)
             let iconName = getWeatherIcon(id: weather.weather[0].id)
-            var item = ThreeHourWeatherData(time: time, iconName: iconName, temperature: temperature)
-            result.append(item)
+            return ThreeHourWeatherData(time: time, iconName: iconName, temperature: temperature)
         }
-        self.threeHourData.accept(result)
-
+        return result
     }
     
     
     private func filterDataForTwoDays(_ weatherList: [WeatherList]) -> [WeatherList]? {
         // 현재 한국 시간을 구함
         let currentDate = Date()
-        print("현재 한국 시간: \(currentDate)")
         let convertedData = currentDate.toUTC()
         if let minDate = convertedData.0, let minHour = convertedData.1{
-            print("최소: \(minDate), 시각만: \(minHour)") // 시간만(hour) 가져와서 비교
             
             let maxTime = minDate.addOneDay()!
-            print("최대: \(maxTime)")
             
             let filteredData = weatherList.compactMap({ weather in
                 if let val = weather.dtTxt.isoStringToDate(dateString: weather.dtTxt) {
@@ -164,7 +150,7 @@ final class WeatherDataViewModel {
         return nil
     }
     
-    func calculateAverageHumidWind(_ weatherList: [WeatherList]) {
+    func calculateAverageHumidWind(_ weatherList: [WeatherList]) -> AverageWeatherData {
         
         // 습도 평균 계산
         let totalHumidity = weatherList.map { Double($0.main.humidity) }.reduce(0, +)
@@ -177,11 +163,10 @@ final class WeatherDataViewModel {
         // 바람 속도 평균 계산
         let totalWindSpeed = weatherList.map { $0.wind.speed }.reduce(0, +)
         let averageWindSpeed = totalWindSpeed / Double(weatherList.count)
-        let result = AverageWeatherData(humidity: String(format: "%.0f%%", averageHumidity), clouds: String(format: "%.0f%%", averageClouds), windSpeed: String(format: "%.2f m/s", averageWindSpeed))
-        self.averageData.accept(result)
+        return AverageWeatherData(humidity: String(format: "%.0f%%", averageHumidity), clouds: String(format: "%.0f%%", averageClouds), windSpeed: String(format: "%.2f m/s", averageWindSpeed))
     }
     
-    func processDailyWeatherData(_ weatherModel: WeatherModel) {
+    func processDailyWeatherData(_ weatherModel: WeatherModel) -> [DailyWeatherData]{
         let groupedData = self.groupWeatherByDay(weatherModel.list)
         
         //일별로 최대, 최저 기온 및 날씨 아이콘 결정
@@ -193,13 +178,12 @@ final class WeatherDataViewModel {
             let result = DailyWeatherData(dayOfWeek: day, icon: icon,tempMax: maxTemp, tempMin: minTemp)
             return result
         }
-        dailyWeatherData.accept(processedData)
+        return processedData
     }
     
     // 데이터 그룹화 함수
     private func groupWeatherByDay(_ weatherList: [WeatherList]) -> [String: [WeatherList]] {
         var groupedWeather = [String: [WeatherList]]()
-        let calendar = Calendar.current
         
         for weather in weatherList {
             let date = Date(timeIntervalSince1970: TimeInterval(weather.dt))
