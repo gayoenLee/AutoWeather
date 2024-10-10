@@ -29,11 +29,12 @@ final class WeatherViewController: UIViewController {
     private let weatherView = WeatherView()
     
     let searchBarTapped = PublishSubject<Void>()  // 검색바 클릭 이벤트
-    let dataSource = WeatherCollectionViewDataSource()
+    private let dataSource : WeatherCollectionViewDataSource
     
-    init(viewModel: WeatherDataViewModel, searchVM: CitySearchViewModel ) {
+    init(viewModel: WeatherDataViewModel, searchVM: CitySearchViewModel, dataSource: WeatherCollectionViewDataSource ) {
         self.viewModel = viewModel
         self.searchVM = searchVM
+        self.dataSource = dataSource
         super.init(nibName: nil, bundle: nil)
     }
     
