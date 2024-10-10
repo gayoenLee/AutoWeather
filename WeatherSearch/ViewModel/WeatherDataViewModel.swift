@@ -23,28 +23,29 @@ final class WeatherDataViewModel {
     let fullWeatherData = BehaviorRelay<FullWeatherData?>(value: nil)
     //도시 이름, 위도 및 경도 입력을 위한 Relay
     var searchCity = BehaviorRelay<SearchCity?>(value: nil)
-    var isLoading = BehaviorRelay<Bool>(value: false)
+    let isLoading = BehaviorRelay<Bool>(value: true)
     var errorMessage = BehaviorRelay<String?>(value: nil)
     private var calendar = Calendar.current
     
     init(processWeatherDataUseCase: ProcessWeatherDataUseCaseImpl) {
         self.processWeatherDataUseCase = processWeatherDataUseCase
-        bindInputToFetchWeather()
+        //bindInputToFetchWeather()
     }
     
-    private func bindInputToFetchWeather() {
+     func bindInputToFetchWeather() {
         getSearchCity()
             .flatMapLatest { [weak self] city -> Single<FullWeatherData> in
                 guard let self = self else {
-                    
+                    print("시작 못함")
                     return Single.error(NSError(domain: "WeatherApp", code: -1, userInfo: [NSLocalizedDescriptionKey: "ViewModel is deallocated"]))
-                    
                 }
-                updateUIWithFetchedData(nil, loadingState: true)
+                print("바인드인풋")
+                //updateUIWithFetchedData(nil, loadingState: true)
                 return self.processWeatherDataUseCase.execute(for: city)
             }
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] processedResult in
+                print("바인드 인풋 섭스크라입 결과 받음")
                 
                 self?.updateUIWithFetchedData(processedResult, loadingState: false)
             })
@@ -69,9 +70,10 @@ final class WeatherDataViewModel {
         DispatchQueue.main.async {
             if let result = result {
                 self.fullWeatherData.accept(result)
+                print("변경 전 로딩값: \(self.isLoading.value)")
+                self.isLoading.accept(loadingState)
+                print("로딩값 변경함 : \(self.isLoading.value)")
             }
-            
-            self.isLoading.accept(loadingState)
         }
     }
     

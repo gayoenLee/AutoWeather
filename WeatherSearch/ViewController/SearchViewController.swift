@@ -17,7 +17,7 @@ final class SearchViewController: UIViewController {
     private let searchVM: CitySearchViewModel
     private let disposeBag = DisposeBag()
     var didSelectCity = PublishSubject<SearchCity>()
-    private let searchView = SearchView()
+    private let searchView = CustomSearchView()
     
     init(viewModel: WeatherDataViewModel, searchVM: CitySearchViewModel) {
         self.viewModel = viewModel

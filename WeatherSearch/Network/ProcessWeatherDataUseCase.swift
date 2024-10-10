@@ -24,6 +24,7 @@ final class ProcessWeatherDataUseCaseImpl: ProcessWeatherDataUseCase {
         // repository에서 Single<WeatherModel> 가져옴
            return repository.getWeatherData(for: city)
             .flatMap { weatherModel in
+                print("유즈케이스 익스큐트")
                        // WeatherModel 데이터를 처리하여 FullWeatherData 생성
                        return self.processDataInBackground(weatherModel)
                    }
@@ -42,7 +43,7 @@ final class ProcessWeatherDataUseCaseImpl: ProcessWeatherDataUseCase {
                     async let mapData = self.processMapData(weatherModel)
                     
                     async let averageData = self.calculateAverageHumidWind(weatherModel.list)
-                    
+                    print("데이터 처리중 processDataInBackground")
                     // 가공된 데이터를 모두 모아 FullWeatherData
                     let fullWeatherData =  await FullWeatherData(
                         todayCityInfo: todayCityInfo,
@@ -50,8 +51,11 @@ final class ProcessWeatherDataUseCaseImpl: ProcessWeatherDataUseCase {
                         dailyWeatherData: dailyWeatherData,
                         mapLocationData: mapData, averageData: averageData
                     )
+                    print("데이터 처리 완료")
                     single(.success(fullWeatherData))
                 } catch {
+                    print("데이터 처리 실패")
+
                     single(.failure(error))
                 }
             }

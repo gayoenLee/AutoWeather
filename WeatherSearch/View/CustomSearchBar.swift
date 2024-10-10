@@ -29,14 +29,14 @@ final class CustomSearchBar: UISearchBar {
            self.searchBarStyle = .minimal
            
            if let textField = self.value(forKey: "searchField") as? UITextField {
-               textField.backgroundColor = UIColor(red: 0.85, green: 0.90, blue: 0.95, alpha: 1) // 연한 파란색 배경 설정
+               textField.backgroundColor = .txtFieldColor
                textField.textColor = .darkGray
                textField.font = UIFont.systemFont(ofSize: 16)
                textField.layer.cornerRadius = 20
                textField.clipsToBounds = true
                textField.attributedPlaceholder = NSAttributedString(
                    string: "Search",
-                   attributes: [NSAttributedString.Key.foregroundColor: UIColor.lightGray]
+                   attributes: [NSAttributedString.Key.foregroundColor: UIColor.white]
                )
                
                let iconView = UIImageView(image: UIImage(systemName: "magnifyingglass"))

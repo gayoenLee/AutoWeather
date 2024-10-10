@@ -54,6 +54,7 @@ final class WeatherViewController: UIViewController {
         bindLoadingState()
         bindWeatherDataVM()
         navigationItem.hidesBackButton = true
+        //viewModel.bindInputToFetchWeather()
     }
     
     private func setupWeatherView() {

@@ -9,7 +9,7 @@ import UIKit
 import SnapKit
 
 
-final class SearchView: UIView {
+final class CustomSearchView: UIView {
     
     // 검색바와 테이블뷰를 포함하는 뷰
     let searchBar = CustomSearchBar()

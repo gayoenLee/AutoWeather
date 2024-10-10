@@ -37,17 +37,52 @@ final class AppCoordinator: Coordinator {
           let searchVC = SearchViewController(viewModel: self.weatherViewController.viewModel, searchVM: weatherViewController.searchVM)
           return searchVC
       }()
+    
+    private lazy var loadingViewController = {
+        let loadingViewController = LoadingViewController()
+        return loadingViewController
+    }()
 
-      init(navigationController: UINavigationController) {
+    private let window: UIWindow
+
+    init(navigationController: UINavigationController, window: UIWindow) {
           self.navigationController = navigationController
+        self.window = window
       }
     
     // 앱 시작 시 WeatherViewController를 설정
     func start() {
-        navigationController.setViewControllers([weatherViewController], animated: true)
+        showLoadingScreen()
+        fetchDataAndLoadMainScreen()
         bindWeatherViewController()
     }
     
+    private func showLoadingScreen() {
+          window.rootViewController = loadingViewController
+          window.makeKeyAndVisible()
+      }
+    
+    private func showMainScreen() {
+        
+         navigationController.setViewControllers([weatherViewController], animated: true)
+         window.rootViewController = navigationController
+     }
+    
+    private func fetchDataAndLoadMainScreen() {
+            weatherViewController.viewModel.isLoading
+                .skip(1)
+                .distinctUntilChanged()
+                .subscribe(onNext: { [weak self] isLoading in
+                    print("isloading")
+                    if !isLoading {
+                        self?.loadingViewController.stopLoading()
+                        self?.showMainScreen()
+                    }
+                })
+                .disposed(by: disposeBag)
+            
+            weatherViewController.viewModel.bindInputToFetchWeather()
+        }
     
     // WeatherViewController에서 발생하는 이벤트 처리
     private func bindWeatherViewController() {

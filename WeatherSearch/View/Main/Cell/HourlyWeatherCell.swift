@@ -119,7 +119,6 @@ final class HourlyWeatherCell: UICollectionViewCell {
            horizontalStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
         
         for data in hourlyWeatherData {
-            let iconImage = UIImage(named: data.iconName)
             let weatherView = createWeatherView(data: data)
             horizontalStackView.addArrangedSubview(weatherView)
         }
