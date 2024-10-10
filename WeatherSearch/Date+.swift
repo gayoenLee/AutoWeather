@@ -9,98 +9,64 @@ import Foundation
 
 extension Date {
     
-    // 한국 시간을 UTC로 변환하는 함수
-    func toUTC() -> (Date?,Date?) {
-        // 한국 시간대 설정된 Calendar 사용
-        var calendar = Calendar.current
-        calendar.timeZone = TimeZone(abbreviation: "KST")!  // 한국 시간대 설정
-        calendar.locale = Locale(identifier: "ko_KR")
-        // 현재 시간을 UTC 시간대로 변환
-        let utcTimeZone = TimeZone(identifier: "UTC")!
-        let utcDate = calendar.date(from: calendar.dateComponents(in: utcTimeZone, from: self))
+    // UTC 시간을 한국 시간으로 변환하는 함수
+    func toKoreanDayString() -> String? {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        // 변환된 UTC 시간을 로컬 시간으로 변환
+        dateFormatter.timeZone = TimeZone(identifier: "Asia/Seoul")!
+        dateFormatter.locale = Locale(identifier: "ko_KR")
         
-        // UTC로 변환된 시간에서 시각만 추출
-           guard let date = utcDate else { return (nil,nil) }
-        // 현재 날짜의 시, 분, 초만 추출하여 Date로 변환
-        let components = calendar.dateComponents([.year, .month, .day, .hour], from: date)
-        var zeroedComponents = DateComponents()
-               zeroedComponents.year = components.year
-               zeroedComponents.month = components.month
-               zeroedComponents.day = components.day
-               zeroedComponents.hour = components.hour
-               zeroedComponents.minute = 0
-               zeroedComponents.second = 0
-               
-               
-            // 변환된 시각만을 포함한 Date 생성
-            let utcHourDate = calendar.date(from: zeroedComponents)
+        dateFormatter.dateFormat = "EEEE"
         
-        return (utcDate,utcHourDate)
+        return dateFormatter.string(from: self)
     }
     
-    // UTC 시간을 한국 시간으로 변환하는 함수 (반대 기능)
-    func toKoreanTime() -> Date? {
-        let koreanTimeZone = TimeZone(abbreviation: "KST")!
-        var calendar = Calendar.current
-        calendar.timeZone = koreanTimeZone
-        let koreanDate = calendar.date(from: calendar.dateComponents(in: koreanTimeZone, from: self))
-        return koreanDate
+    // UTC 시간을 한국 시간으로 변환하는 함수
+    func toKoreanTimeWithAMPM() -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.timeZone = TimeZone(identifier: "Asia/Seoul")!
+        dateFormatter.locale = Locale(identifier: "ko_KR")
+        
+        dateFormatter.dateFormat = "a h시"
+        
+        return dateFormatter.string(from: self)
     }
     
-    // 변환된 UTC 시간에 하루 더한 값 계산
-    func addOneDay() -> Date? {
-        var calendar = Calendar.current
-        calendar.timeZone = TimeZone(identifier: "UTC")!  // UTC 시간대 설정
-        return calendar.date(byAdding: .day, value: 1, to: self)  // 하루 더하기
+    func getMinMaxTimeRange() -> (Date, Date)? {
+        let calendar = Calendar.current
+        let koreanTimeZone = TimeZone(identifier: "Asia/Seoul")!
+        
+        // 현재 한국 시간 기준의 날짜
+        var currentDate = Date()
+        currentDate = calendar.date(bySetting: .minute, value: 0, of: currentDate) ?? currentDate
+        currentDate = calendar.date(bySetting: .second, value: 0, of: currentDate) ?? currentDate
+        
+        // 최소 시간: 현재 시간 (한국 시간)
+        let minDate = currentDate
+        
+        // 최대 시간: 현재 시간 + 48시간 (이틀 후)
+        guard let maxDate = calendar.date(byAdding: .day, value: 2, to: minDate) else {
+            return nil
+        }
+        
+        return (minDate, maxDate)
     }
-    
-    // 날짜에 맞는 요일 반환
-      func dayOfWeek() -> String {
-          let dateFormatter = DateFormatter()
-          dateFormatter.locale = Locale(identifier: "ko_KR")
-          dateFormatter.dateFormat = "EEEE"
-          return dateFormatter.string(from: self)
-      }
 }
 
 extension String {
     
-    // ISO 8601 시간 문자열을 Date 객체로 변환하는 함수
-    func isoStringToDate(dateString: String) -> Date? {
+    // ISO 8601 형식의 시간을 Date로 변환하고
+    func convertISOStringToDate() -> Date? {
+        
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"  // 문자열의 형식 지정
-        dateFormatter.timeZone = TimeZone(identifier: "UTC")  // UTC 시간대 설정
-        return dateFormatter.date(from: dateString)
-    }
-    
-    // ISO 8601 형식의 시간을 Date로 변환하고 한국 시간으로 변환하는 함수
-    func convertISOToKoreanTime(isoString: String) -> String {
-        let dateFormatter = DateFormatter()
-          
-          // 서버에서 받은 형식에 맞춘 포맷 설정 (ISO 형식이 아닌 일반 날짜 형식)
-          dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-          dateFormatter.timeZone = TimeZone(identifier: "UTC")  // 입력은 UTC 기준
-
+        // 서버에서 받은 형식에 맞춘 포맷 설정 (ISO 형식이 아닌 일반 날짜 형식)
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        dateFormatter.timeZone = TimeZone(identifier: "UTC")  // 입력은 UTC 기준
         // 1. ISO 8601 형식 문자열을 Date로 변환
-        guard let date = dateFormatter.date(from: isoString) else {
-            return "시간 변환 오류"
+        guard let date = dateFormatter.date(from: self) else {
+            return nil
         }
-
-        // 2. DateFormatter를 사용하여 한국 시간으로 변환된 시간 포맷팅
-        dateFormatter.dateFormat = "a h시" // 원하는 시간 형식 (오전 11시)
-        dateFormatter.locale = Locale(identifier: "ko_KR") // 한국어
-        dateFormatter.timeZone = TimeZone(abbreviation: "KST")! // 한국 시간대
-        
-        // 3. 변환된 한국 시간 반환
-        return dateFormatter.string(from: date)
-    }
-    
-     func convertTimeToLabel(time: String) -> String{
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "a h시"
-        dateFormatter.locale = Locale(identifier: "ko_KR")
-        
-        // Unix 타임스탬프를 사용하여 Date 객체 생성
-        return time.convertISOToKoreanTime(isoString: time)
+        return date
     }
 }

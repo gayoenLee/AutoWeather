@@ -120,41 +120,46 @@ final class WeatherDataViewModel {
     
     
     private func processThreeHourData(_ weatherList: [WeatherList]) async -> [ThreeHourWeatherData]? {
-        let data = filterDataForTwoDays(weatherList)
-        guard let data = data else { return nil}
-        
-        return await withTaskGroup(of: ThreeHourWeatherData?.self) { group in
-            var result : [ThreeHourWeatherData] = []
+        let filteredData = filterDataForTwoDays(weatherList)
+        guard let filteredData = filteredData else { return nil}
+        var result = Array<ThreeHourWeatherData?>(repeating: nil, count: filteredData.count)
+
+         await withTaskGroup(of: (Int,ThreeHourWeatherData?).self) { group in
             
-            for (idx, weather) in data.enumerated() {
+            for (idx, weather) in filteredData.enumerated() {
                 group.addTask {
-                    let time = idx == 0 ? "지금" : weather.dtTxt.convertTimeToLabel(time: weather.dtTxt)
+                    var time = ""
+                    if idx == 0 {
+                        time = "지금"
+                    } else {
+                        guard let date = weather.dtTxt.convertISOStringToDate() else { return (idx,nil) }
+                        time = date.toKoreanTimeWithAMPM()
+                    }
                     let temperature = String(weather.main.temp)
                     let iconName = self.getWeatherIcon(id: weather.weather[0].id)
-                    return ThreeHourWeatherData(time: time, iconName: iconName, temperature: temperature)
+                    let data = ThreeHourWeatherData(time: time, iconName: iconName, temperature: temperature)
+                    return (idx,data)
                 }
             }
-            for await weatherData in group {
+            for await (idx,weatherData) in group {
                 if let weatherData = weatherData {
-                    result.append(weatherData)
+                    result[idx] = weatherData
                 }
             }
-            return result
         }
+        return result.compactMap { $0 }
+
     }
     
     
     private func filterDataForTwoDays(_ weatherList: [WeatherList]) -> [WeatherList]? {
         // 현재 한국 시간을 구함
-        let currentDate = Date()
-        let convertedData = currentDate.toUTC()
-        guard let minDate = convertedData.0, let minHour = convertedData.1 else { return [] }
-            
-        guard let maxTime = minDate.addOneDay() else { return [] }
+        let standardTime = Date().getMinMaxTimeRange()
+        guard let minTime = standardTime?.0, let maxTime = standardTime?.1 else { return [] }
             
             let filteredData = weatherList.filter({ weather in
-                if let val = weather.dtTxt.isoStringToDate(dateString: weather.dtTxt) {
-                    return minHour <= val && val <= maxTime
+                if let val = weather.dtTxt.convertISOStringToDate() {
+                    return minTime <= val && val <= maxTime
                 }
                 return false
             })
@@ -179,42 +184,70 @@ final class WeatherDataViewModel {
     
     func processDailyWeatherData(_ weatherModel: WeatherModel) async -> [DailyWeatherData]{
         let groupedData = self.groupWeatherByDay(weatherModel.list)
+        var result = Array<DailyWeatherData?>(repeating: nil, count: groupedData.count)
         
-        return await withTaskGroup(of: DailyWeatherData?.self) { group in
-            var result : [DailyWeatherData] = []
-            
-            for (day, data) in groupedData {
+         await withTaskGroup(of: (Int, DailyWeatherData?).self) { group in
+            for (index, (day, data)) in groupedData.enumerated() {
                 group.addTask {
                     let maxTemp = data.map { $0.main.tempMax }.max() ?? 0
                     let minTemp = data.map { $0.main.tempMin }.min() ?? 0
                     let weatherIcon = self.determineMostFrequentOrSevereIcon(from: data.map { $0.weather.first?.id ?? 800 })
                     let icon = self.getWeatherIcon(id: Int(weatherIcon) ?? 800)
-                    return DailyWeatherData(dayOfWeek: day, icon: icon,tempMax: maxTemp, tempMin: minTemp)
+                    let dailyData = DailyWeatherData(dayOfWeek: day, icon: icon,tempMax: maxTemp, tempMin: minTemp)
+                    return (index, dailyData)
                 }
             }
             
-            for await dailyData in group {
+            for await (index,dailyData) in group {
                 if let dailyData = dailyData {
-                    result.append(dailyData)
+                    result[index] = dailyData
                 }
             }
-            return result
+            print("변환 후 데이터 확인: \(result)")
         }
+        return result.compactMap { $0 }
     }
     
     // 데이터 그룹화 함수
-    private func groupWeatherByDay(_ weatherList: [WeatherList]) -> [String: [WeatherList]] {
-        var groupedWeather = [String: [WeatherList]]()
+    private func groupWeatherByDay(_ weatherList: [WeatherList]) -> [(String, [WeatherList])] {
+        var groupedWeather = [(String, [WeatherList])]()
         // 한국 표준시 (KST) 타임존 설정
         let koreaTimeZone = TimeZone(identifier: "Asia/Seoul")!
         calendar.timeZone = koreaTimeZone
+        var currentDay: String? = nil
+          var currentGroup: [WeatherList] = []
 
-        groupedWeather = Dictionary(grouping: weatherList) { weather -> String in
-            let date = Date(timeIntervalSince1970: TimeInterval(weather.dt))
-            return calendar.startOfDay(for: date).dayOfWeek()
-            
-        }
-        return groupedWeather
+          // 이미 시간 순서대로 정렬된 weatherList를 순회하면서 그룹화
+          for weather in weatherList {
+              if let localDate = weather.dtTxt.convertISOStringToDate() {
+                  let dayString = localDate.toKoreanDayString()
+
+                  if currentDay == nil {
+                      currentDay = dayString
+                  }
+
+                  // 요일이 바뀌면 기존 데이터를 그룹에 추가하고 새로운 그룹을 시작
+                  if currentDay == dayString {
+                      currentGroup.append(weather)
+                  } else {
+                      // 이전 요일의 데이터를 추가
+                      if let currentDay = currentDay {
+                          groupedWeather.append((currentDay, currentGroup))
+                      }
+
+                      // 새로운 요일로 그룹 시작
+                      currentDay = dayString
+                      currentGroup = [weather]
+                  }
+              }
+          }
+
+          // 마지막 그룹 추가
+          if let currentDay = currentDay {
+              groupedWeather.append((currentDay, currentGroup))
+          }
+        print("요일만 확인: \(groupedWeather.map({ $0.0}))")
+          return groupedWeather
     }
     
     // 날씨 id 값들을 분석해서 가장 중요한 아이콘을 결정하는 함수
