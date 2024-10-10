@@ -21,7 +21,7 @@ final class WeatherCollectionViewDataSource: NSObject, WeatherViewDelegate, Weat
         let width = collectionView.bounds.width
         switch indexPath.item {
         case 0:
-            return CGSize(width: width, height: 200) // City Info
+            return CGSize(width: width, height: 250) // City Info
         case 1:
             return CGSize(width: width, height: 150) // Hourly Weather
         case 2:
@@ -31,7 +31,7 @@ final class WeatherCollectionViewDataSource: NSObject, WeatherViewDelegate, Weat
         case 4:
             return CGSize(width: width, height: width) // Five Day Forecast
         default:
-            return CGSize(width: collectionView.frame.width, height: 100)
+            return CGSize(width: collectionView.bounds.width, height: 100)
         }
     }
     

@@ -14,9 +14,9 @@ final class HourlyWeatherCell: UICollectionViewCell {
     // 상단 문장을 위한 UILabel
     private let windSpeedLabel: UILabel = {
         let label = UILabel()
-        label.text = "돌풍의 풍속은 최대 4m/s입니다."
+        label.text = "2일간의 일기예보"
         label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-        label.textAlignment = .center
+        label.textAlignment = .left
         label.textColor = .white
         return label
     }()
@@ -51,6 +51,9 @@ final class HourlyWeatherCell: UICollectionViewCell {
         scrollView.addSubview(horizontalStackView)
         contentView.addSubview(windSpeedLabel)  // 상단 문장 추가
         contentView.addSubview(scrollView)      // 하단 스크롤 뷰 추가
+        
+        contentView.backgroundColor = UIColor(red: 0.4, green: 0.6, blue: 0.9, alpha: 1) // 배경색
+        contentView.layer.cornerRadius = 8
     }
     
     // 시간, 아이콘, 기온을 세로로 쌓는 StackView 생성
@@ -65,6 +68,7 @@ final class HourlyWeatherCell: UICollectionViewCell {
         timeLabel.text = data.time
         timeLabel.font = UIFont.systemFont(ofSize: 14, weight: .medium)
         timeLabel.textAlignment = .left
+        timeLabel.textColor = .white
         
         // 날씨 아이콘 이미지
         //let iconImageView = UIImageView()
@@ -80,6 +84,7 @@ final class HourlyWeatherCell: UICollectionViewCell {
         tempLabel.text = "\(data.temperature)°"
         tempLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         tempLabel.textAlignment = .center
+        tempLabel.textColor = .white
         
         // 세로 StackView에 추가
         stackView.addArrangedSubview(timeLabel)

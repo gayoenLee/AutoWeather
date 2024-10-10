@@ -43,7 +43,7 @@ final class CityTodayInfoCell: UICollectionViewCell {
     
     private func setupCityLabel() {
         self.cityLabel.text = "Asan"
-        cityLabel.font = UIFont.systemFont(ofSize: 40, weight: .bold)
+        cityLabel.font = UIFont.systemFont(ofSize: 40, weight: .thin)
         cityLabel.textColor = .white
         cityLabel.textAlignment = .center
         
@@ -53,7 +53,7 @@ final class CityTodayInfoCell: UICollectionViewCell {
     private func setupTempLabel() {
         // 현재 기온 라벨 설정
         temperatureLabel.text = "-7°"
-        temperatureLabel.font = UIFont.systemFont(ofSize: 60, weight: .thin)
+        temperatureLabel.font = UIFont.systemFont(ofSize: 60, weight: .bold)
         temperatureLabel.textColor = .white
         temperatureLabel.textAlignment = .center
         
@@ -76,7 +76,7 @@ final class CityTodayInfoCell: UICollectionViewCell {
         // 최고/최저 기온 라벨 설정
         highLowLabel.text = "최고:  ° | 최저:  °"
         highLowLabel.font = UIFont.systemFont(ofSize: 18, weight: .regular)
-        highLowLabel.textColor = UIColor.black.withAlphaComponent(0.8)
+        highLowLabel.textColor = .white
         highLowLabel.textAlignment = .center
         
         stackView.addArrangedSubview(highLowLabel)

@@ -70,7 +70,7 @@ final class FiveDayInfoCell: UICollectionViewCell {
         
         //최소, 최대
         let tempLabel = UILabel()
-        tempLabel.text = "최소:\(min) 최대:\(max)"
+        tempLabel.text = "최소:\(min)°  최대:\(max)°"
         tempLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
         tempLabel.textAlignment = .right
         tempLabel.textColor = .white
@@ -116,7 +116,7 @@ final class FiveDayInfoCell: UICollectionViewCell {
                 day = weatherData[i].dayOfWeek
             }
             let image = UIImage(named: weatherData[i].icon)
-            let weatherView = createWeatherView(day:day, icon: image, min: String(weatherData[i].tempMin), max: String(weatherData[i].tempMax))
+            let weatherView = createWeatherView(day:day, icon: image, min: String(Int(weatherData[i].tempMin)), max: String(Int(weatherData[i].tempMax)))
             stackView.addArrangedSubview(weatherView)
         }
     }

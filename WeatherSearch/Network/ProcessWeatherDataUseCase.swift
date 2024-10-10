@@ -43,7 +43,7 @@ final class ProcessWeatherDataUseCaseImpl: ProcessWeatherDataUseCase {
                     
                     async let averageData = self.calculateAverageHumidWind(weatherModel.list)
                     
-                    // 가공된 데이터를 모두 모아 FullWeatherData를 생성합니다.
+                    // 가공된 데이터를 모두 모아 FullWeatherData
                     let fullWeatherData =  await FullWeatherData(
                         todayCityInfo: todayCityInfo,
                         threeHourData: threeHourData,
@@ -56,7 +56,6 @@ final class ProcessWeatherDataUseCaseImpl: ProcessWeatherDataUseCase {
                 }
             }
             return Disposables.create()
-            
         }
     }
     
@@ -67,10 +66,10 @@ final class ProcessWeatherDataUseCaseImpl: ProcessWeatherDataUseCase {
     private func processTodyaCityInfoData(_ weatherModel: WeatherModel) -> TodayCityInfoData {
         let recentData = weatherModel.list[0]
         let name = weatherModel.city.name
-        let temperature = String(recentData.main.temp)
+        let temperature = String(Int(round(recentData.main.temp)))
         let condition = String(recentData.weather[0].koreanDescription)
-        let high = Int(recentData.main.tempMax)
-        let low = Int(recentData.main.tempMin)
+        let high = Int(round(recentData.main.tempMax))
+        let low = Int(round(recentData.main.tempMin))
         return TodayCityInfoData(cityName: name, temperature: temperature, weatherStatue: condition, tempMax: String(high), tempMin: String(low))
     }
     
@@ -91,7 +90,7 @@ final class ProcessWeatherDataUseCaseImpl: ProcessWeatherDataUseCase {
                         guard let date = weather.dtTxt.convertISOStringToDate() else { return (idx,nil) }
                         time = date.toKoreanTimeWithAMPM()
                     }
-                    let temperature = String(weather.main.temp)
+                    let temperature = String(Int(round(weather.main.temp)))
                     let iconName = WeatherUtility.getWeatherIcon(id: weather.weather[0].id)
                     let data = ThreeHourWeatherData(time: time, iconName: iconName, temperature: temperature)
                     return (idx,data)
@@ -144,12 +143,14 @@ final class ProcessWeatherDataUseCaseImpl: ProcessWeatherDataUseCase {
         
          await withTaskGroup(of: (Int, DailyWeatherData?).self) { group in
             for (index, (day, data)) in groupedData.enumerated() {
+                
                 group.addTask {
                     let maxTemp = data.map { $0.main.tempMax }.max() ?? 0
                     let minTemp = data.map { $0.main.tempMin }.min() ?? 0
                     let weatherIcon = self.determineMostFrequentOrSevereIcon(from: data.map { $0.weather.first?.id ?? 800 })
                     let icon = WeatherUtility.getWeatherIcon(id: Int(weatherIcon) ?? 800)
-                    let dailyData = DailyWeatherData(dayOfWeek: day, icon: icon,tempMax: maxTemp, tempMin: minTemp)
+                   
+                    let dailyData = DailyWeatherData(dayOfWeek: day, icon: icon,tempMax: round(maxTemp), tempMin: round(minTemp))
                     return (index, dailyData)
                 }
             }
@@ -198,7 +199,6 @@ final class ProcessWeatherDataUseCaseImpl: ProcessWeatherDataUseCase {
           if let currentDay = currentDay {
               groupedWeather.append((currentDay, currentGroup))
           }
-        print("요일만 확인: \(groupedWeather.map({ $0.0}))")
           return groupedWeather
     }
     

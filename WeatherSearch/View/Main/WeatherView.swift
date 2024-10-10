@@ -30,7 +30,7 @@ final class WeatherView: UIView {
     var collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
     let activityIndicator = UIActivityIndicatorView(style: .large) // 로딩 인디케이터
     
-    let searchBar = UISearchBar()
+    let searchBar = CustomSearchBar()
     private let containerView = UIView() // SearchBar 아래에 들어갈 컨테이너 뷰
     
     override init(frame: CGRect) {
