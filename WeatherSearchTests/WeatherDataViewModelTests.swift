@@ -92,7 +92,7 @@ final class WeatherDataViewModelTests: XCTestCase {
 }
 
 
-class MockWeatherService: WeatherService {
+class MockWeatherService: WeatherServiceProtocol {
     // 모의 응답 데이터를 생성
        static let mockWeatherData = WeatherModel(
            cod: "200",

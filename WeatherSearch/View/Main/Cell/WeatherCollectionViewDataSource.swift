@@ -8,7 +8,7 @@
 import Foundation
 import UIKit
 
-final class WeatherCollectionViewDataSource: NSObject, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+final class WeatherCollectionViewDataSource: NSObject, WeatherViewDelegate, WeatherViewDataSource {
     var fullWeatherData: FullWeatherData?
  
     func update(with newData: FullWeatherData) {

@@ -21,20 +21,15 @@ enum WeatherSection {
 }
 
 final class WeatherViewController: UIViewController {
-    private let collectionBinder = CollectionBinder<WeatherModel>()
+    //private let collectionBinder = CollectionBinder<WeatherModel>()
 
     let viewModel: WeatherDataViewModel
     let searchVM : CitySearchViewModel
     private let disposeBag = DisposeBag()
-    private let activityIndicator = UIActivityIndicatorView(style: .large) // 로딩 인디케이터
-    
-    private let searchBar = UISearchBar()
-    private let containerView = UIView() // SearchBar 아래에 들어갈 컨테이너 뷰
+    private let weatherView = WeatherView()
     
     let searchBarTapped = PublishSubject<Void>()  // 검색바 클릭 이벤트
     let dataSource = WeatherCollectionViewDataSource()
-    //가장 큰 틀
-    private var collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())
     
     init(viewModel: WeatherDataViewModel, searchVM: CitySearchViewModel ) {
         self.viewModel = viewModel
@@ -46,16 +41,13 @@ final class WeatherViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         self.navigationController?.interactivePopGestureRecognizer?.isEnabled = false
         self.navigationItem.hidesBackButton = true
         self.view.backgroundColor = .bgColor
-        setupSearchBar()
-        setupContainerView()
-        setupCollectionView()
-        setupIndicator()
-    
+        setupWeatherView()
         bindSearchBar()
         bindSearchSelected()
         bindLoadingState()
@@ -63,52 +55,25 @@ final class WeatherViewController: UIViewController {
         navigationItem.hidesBackButton = true
     }
     
+    private func setupWeatherView() {
+        self.view.addSubview(self.weatherView)
+        //self.view.addSubview(weatherView)
+        self.weatherView.snp.makeConstraints { make in
+            make.edges.equalToSuperview()
+        }
+        self.weatherView.delegate = dataSource
+        self.weatherView.dataSource = dataSource
+        // 데이터를 리로드하여 CollectionView를 업데이트
+          weatherView.collectionView.reloadData()
+    }
+    
    
     private func bindSearchBar() {
-        searchBar.rx.textDidBeginEditing
+        weatherView.searchBar.rx.textDidBeginEditing
             .bind(to: searchBarTapped)
             .disposed(by: disposeBag)
     }
     
-    // ContainerView 설정 (SearchBar 아래 뷰들만 교체)
-    private func setupContainerView() {
-        view.addSubview(containerView)
-        containerView.backgroundColor = .bgColor
-        containerView.snp.makeConstraints { make in
-            make.top.equalTo(searchBar.snp.bottom).offset(8)
-            make.leading.trailing.equalToSuperview()
-            make.bottom.equalTo(view.safeAreaLayoutGuide)  // 안전영역까지 containerView가 확장되도록 수정
-        }
-    }
-
-    private func setupSearchBar() {
-        view.addSubview(searchBar)
-        searchBar.snp.makeConstraints { make in
-            make.top.equalTo(view.safeAreaLayoutGuide).offset(16)
-            make.leading.trailing.equalToSuperview().inset(16)
-        }
-    }
-    
-    private func setupCollectionView() {
-        collectionView = WeatherViewFactory.createCollectionView()
-        collectionView.delegate = dataSource
-        collectionView.dataSource = dataSource
-        
-        containerView.addSubview(collectionView)
-        collectionView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()  // containerView 내에서 꽉 차도록 설정
-        }
-    }
-
-    
-    private func setupIndicator(){
-        // 로딩 인디케이터
-        activityIndicator.hidesWhenStopped = true
-        view.addSubview(activityIndicator)
-        activityIndicator.snp.makeConstraints { make in
-            make.center.equalToSuperview()
-        }
-    }
     
     private func bindSearchSelected() {
         // 검색 도시 weatherViewModel에 전달
@@ -132,7 +97,9 @@ final class WeatherViewController: UIViewController {
                 guard let self = self else { return }
   
                 self.dataSource.update(with: weatherData)
-                collectionView.reloadData()
+                self.weatherView.collectionView.reloadData()
+                
+                
             })
             .disposed(by: disposeBag)
     }
@@ -141,7 +108,7 @@ final class WeatherViewController: UIViewController {
         // 로딩 상태를 UI에 반영
         viewModel.isLoading
             .asDriver()
-            .drive(activityIndicator.rx.isAnimating)
+            .drive(weatherView.activityIndicator.rx.isAnimating)
             .disposed(by: disposeBag)
     }
 }

@@ -9,11 +9,11 @@ import Foundation
 import Alamofire
 import RxSwift
 
-protocol WeatherService {
+protocol WeatherServiceProtocol {
     func fetchWeather(for city: SearchCity) -> Single<WeatherModel>
 }
 
-final class WeatherAPIService: WeatherService {
+final class WeatherAPIService: WeatherServiceProtocol {
     
     static func getApiKey()-> String {
         guard let weatherKey = Bundle.main.object(forInfoDictionaryKey: "WeatherAPIKey") as? String else {
