@@ -18,6 +18,7 @@ final class WeatherViewFactory {
     static func createCollectionView() -> UICollectionView {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
+        //layout.estimatedItemSize = UICollectionViewFlowLayout.automaticSize
         // UICollectionView 생성
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
                 

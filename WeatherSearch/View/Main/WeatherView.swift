@@ -60,7 +60,7 @@ final class WeatherView: UIView {
         
         containerView.addSubview(collectionView)
         collectionView.snp.makeConstraints { make in
-            make.edges.equalToSuperview()  // containerView 내에서 꽉 차도록 설정
+            make.edges.equalToSuperview().inset(8)  // containerView 내에서 꽉 차도록 설정
         }
     }
     

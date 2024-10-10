@@ -14,12 +14,12 @@ final class GridWeatherView: UICollectionViewCell {
     private let humidityView = GridWeatherCellView(title: "습도", value: "%")
     private let cloudView = GridWeatherCellView(title: "구름", value: "")
     private let windSpeedView = GridWeatherCellView(title: "바람 속도", value: "")
-    private let pressureView = GridWeatherCellView(title: "기압", value: "")
+    private let pressureView = GridWeatherCellView(title: "", value: "")
     
     private let stackView: UIStackView = {
         let stack = UIStackView()
         stack.axis = .vertical
-        stack.spacing = 16
+        stack.spacing = 8
         stack.alignment = .fill
         stack.distribution = .fillEqually
         return stack
@@ -28,7 +28,7 @@ final class GridWeatherView: UICollectionViewCell {
     private let firstRowStackView: UIStackView = {
         let row = UIStackView()
         row.axis = .horizontal
-        row.spacing = 16
+        row.spacing = 8
         row.alignment = .fill
         row.distribution = .fillEqually
         return row
@@ -37,7 +37,7 @@ final class GridWeatherView: UICollectionViewCell {
     private let secondRowStackView: UIStackView = {
         let row = UIStackView()
         row.axis = .horizontal
-        row.spacing = 16
+        row.spacing = 8
         row.alignment = .fill
         row.distribution = .fillEqually
         return row
@@ -67,7 +67,7 @@ final class GridWeatherView: UICollectionViewCell {
         stackView.addArrangedSubview(secondRowStackView)
         
         stackView.snp.makeConstraints { make in
-            make.edges.equalToSuperview().inset(16)
+            make.edges.equalToSuperview()
         }
     }
     
@@ -77,6 +77,4 @@ final class GridWeatherView: UICollectionViewCell {
         cloudView.setValue(data.clouds)
         windSpeedView.setValue(data.windSpeed)
     }
-    
-    
 }

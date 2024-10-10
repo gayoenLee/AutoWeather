@@ -60,7 +60,7 @@ final class MapViewCell: UICollectionViewCell {
         
         mapView.snp.makeConstraints { make in
             make.top.equalTo(title.snp.bottom).offset(8)
-            make.leading.trailing.equalToSuperview().inset(8)
+            make.leading.trailing.equalToSuperview().inset(16)
             make.bottom.equalToSuperview()
         }
     }

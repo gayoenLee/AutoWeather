@@ -18,17 +18,18 @@ final class WeatherCollectionViewDataSource: NSObject, WeatherViewDelegate, Weat
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         //        return CGSize(width: collectionView.frame.width*0.9, height: 80)
+        let width = collectionView.bounds.width
         switch indexPath.item {
         case 0:
-            return CGSize(width: collectionView.frame.width, height: 250) // City Info
+            return CGSize(width: width, height: 200) // City Info
         case 1:
-            return CGSize(width: collectionView.frame.width, height: 150) // Hourly Weather
+            return CGSize(width: width, height: 150) // Hourly Weather
         case 2:
-            return CGSize(width: collectionView.frame.width, height: 250) // MapView
+            return CGSize(width: width, height: 250)
         case 3:
-            return CGSize(width: collectionView.frame.width, height: collectionView.frame.width) // Five Day Forecast
+            return CGSize(width: width, height: width) // Five Day Forecast
         case 4:
-            return CGSize(width: collectionView.frame.width, height: collectionView.frame.width) // Five Day Forecast
+            return CGSize(width: width, height: width) // Five Day Forecast
         default:
             return CGSize(width: collectionView.frame.width, height: 100)
         }

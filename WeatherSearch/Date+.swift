@@ -35,7 +35,6 @@ extension Date {
     
     func getMinMaxTimeRange() -> (Date, Date)? {
         let calendar = Calendar.current
-        let koreanTimeZone = TimeZone(identifier: "Asia/Seoul")!
         
         // 현재 한국 시간 기준의 날짜
         var currentDate = Date()

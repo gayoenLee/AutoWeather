@@ -20,11 +20,16 @@ final class AppCoordinator: Coordinator {
     
     private let disposeBag = DisposeBag()
     private lazy var weatherViewController: WeatherViewController = {
-        let service = WeatherAPIService()
-        let viewModel = WeatherDataViewModel(weatherService: service)
+        
+        let weatherService = WeatherAPIService()
+        let repository = WeatherRepositoryImpl(weatherService: weatherService)
+        let weatherUseCase = ProcessWeatherDataUseCaseImpl(repository: repository)
+        let viewModel = WeatherDataViewModel(processWeatherDataUseCase: weatherUseCase)
+        
         let searchVM = CitySearchViewModel()
         let dataSource = WeatherCollectionViewDataSource()
         let mainViewController = WeatherViewController(viewModel: viewModel, searchVM: searchVM, dataSource: dataSource)
+        
         return mainViewController
     }()
     

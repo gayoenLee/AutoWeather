@@ -17,7 +17,7 @@ final class WeatherAPIService: WeatherServiceProtocol {
     
     static func getApiKey()-> String {
         guard let weatherKey = Bundle.main.object(forInfoDictionaryKey: "WeatherAPIKey") as? String else {
-            print("Not found WeatherAPI Key")
+            fatalError("Weather API Key not found")
             return ""
         }
         return weatherKey
@@ -28,7 +28,7 @@ final class WeatherAPIService: WeatherServiceProtocol {
     func fetchWeather(for city: SearchCity) -> Single<WeatherModel>  {
         let request : WeatherRequest
         
-        if city.cityName == nil{
+        if let cityName = city.cityName{
             request = .cityName(data: city)
         }else{
             request = .latlon(data: city)
