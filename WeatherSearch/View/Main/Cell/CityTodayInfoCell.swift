@@ -43,7 +43,7 @@ final class CityTodayInfoCell: UICollectionViewCell {
     
     private func setupCityLabel() {
         self.cityLabel.text = "Asan"
-        cityLabel.font = UIFont.systemFont(ofSize: 40, weight: .thin)
+        cityLabel.font = UIFont.systemFont(ofSize: 40, weight: .regular)
         cityLabel.textColor = .white
         cityLabel.textAlignment = .center
         

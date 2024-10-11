@@ -24,7 +24,6 @@ final class ProcessWeatherDataUseCaseImpl: ProcessWeatherDataUseCase {
         // repository에서 Single<WeatherModel> 가져옴
            return repository.getWeatherData(for: city)
             .flatMap { weatherModel in
-                print("유즈케이스 익스큐트")
                        // WeatherModel 데이터를 처리하여 FullWeatherData 생성
                        return self.processDataInBackground(weatherModel)
                    }
@@ -35,29 +34,19 @@ final class ProcessWeatherDataUseCaseImpl: ProcessWeatherDataUseCase {
     private func processDataInBackground(_ weatherModel: WeatherModel) -> Single<FullWeatherData>  {
         return Single.create { single in
             Task {
-                do {
                     async let todayCityInfo = self.processTodyaCityInfoData(weatherModel)
-                    
                     async let threeHourData = self.processThreeHourData(Array(weatherModel.list.prefix(18)))
                     async let dailyWeatherData = self.processDailyWeatherData(weatherModel)
                     async let mapData = self.processMapData(weatherModel)
-                    
                     async let averageData = self.calculateAverageHumidWind(weatherModel.list)
-                    print("데이터 처리중 processDataInBackground")
-                    // 가공된 데이터를 모두 모아 FullWeatherData
+
                     let fullWeatherData =  await FullWeatherData(
                         todayCityInfo: todayCityInfo,
                         threeHourData: threeHourData,
                         dailyWeatherData: dailyWeatherData,
                         mapLocationData: mapData, averageData: averageData
                     )
-                    print("데이터 처리 완료")
                     single(.success(fullWeatherData))
-                } catch {
-                    print("데이터 처리 실패")
-
-                    single(.failure(error))
-                }
             }
             return Disposables.create()
         }
@@ -78,7 +67,7 @@ final class ProcessWeatherDataUseCaseImpl: ProcessWeatherDataUseCase {
     }
     
     
-    private func processThreeHourData(_ weatherList: [WeatherList]) async -> [ThreeHourWeatherData]? {
+    private func processThreeHourData(_ weatherList: [WeatherList]) async   -> [ThreeHourWeatherData]? {
         let filteredData = filterDataForTwoDays(weatherList)
         guard let filteredData = filteredData else { return nil}
         var result = Array<ThreeHourWeatherData?>(repeating: nil, count: filteredData.count)

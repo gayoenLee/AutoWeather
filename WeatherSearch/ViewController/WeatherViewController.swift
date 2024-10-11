@@ -11,17 +11,7 @@ import RxSwift
 import SnapKit
 import MapKit
 
-// 1. WeatherSection을 통해 섹션 구분
-enum WeatherSection {
-    case todayInfo
-    case hourlyWeather
-    case fiveDayInfo
-    case mapView
-    case gridWeather
-}
-
 final class WeatherViewController: UIViewController {
-    //private let collectionBinder = CollectionBinder<WeatherModel>()
 
     let viewModel: WeatherDataViewModel
     let searchVM : CitySearchViewModel
@@ -54,25 +44,29 @@ final class WeatherViewController: UIViewController {
         bindLoadingState()
         bindWeatherDataVM()
         navigationItem.hidesBackButton = true
-        //viewModel.bindInputToFetchWeather()
     }
     
     private func setupWeatherView() {
         self.view.addSubview(self.weatherView)
-        //self.view.addSubview(weatherView)
         self.weatherView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
         self.weatherView.delegate = dataSource
         self.weatherView.dataSource = dataSource
-        // 데이터를 리로드하여 CollectionView를 업데이트
           weatherView.collectionView.reloadData()
     }
     
    
     private func bindSearchBar() {
         weatherView.searchBar.rx.textDidBeginEditing
-            .bind(to: searchBarTapped)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] in
+                guard let self = self else { return }
+                self.searchBarTapped.onNext(())
+                DispatchQueue.main.async {
+                    self.weatherView.searchBar.resignFirstResponder()
+                }
+            })
             .disposed(by: disposeBag)
     }
     
@@ -86,12 +80,6 @@ final class WeatherViewController: UIViewController {
     
     private func bindWeatherDataVM(){
         
-        // 검색 도시 weatherViewModel에 전달
-        searchVM.searchCitySelected
-            .bind(to: viewModel.searchCity)
-            .disposed(by: disposeBag)
-        
-        // 오늘의 도시 정보 셀만 업데이트
         viewModel.fullWeatherData
             .compactMap { $0 }
             .observe(on: MainScheduler.instance)
@@ -100,8 +88,6 @@ final class WeatherViewController: UIViewController {
   
                 self.dataSource.update(with: weatherData)
                 self.weatherView.collectionView.reloadData()
-                
-                
             })
             .disposed(by: disposeBag)
     }

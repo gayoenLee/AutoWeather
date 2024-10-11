@@ -39,7 +39,7 @@ final class CustomCityCell: UITableViewCell {
            contentView.addSubview(cityLabel)
            contentView.addSubview(countryLabel)
            contentView.backgroundColor = .bgColor
-           // SnapKit으로 레이아웃 설정
+
            cityLabel.snp.makeConstraints { make in
                make.leading.top.equalToSuperview().inset(16)
            }
@@ -51,7 +51,6 @@ final class CustomCityCell: UITableViewCell {
            }
        }
        
-       // 데이터를 설정하는 함수
        func configure(cityName: String, country: String) {
            cityLabel.text = cityName
            countryLabel.text = country

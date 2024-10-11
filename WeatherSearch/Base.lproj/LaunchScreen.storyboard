@@ -17,10 +17,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Weather App" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="jSW-iN-ahk" userLabel="Weather Search APP">
-                                <rect key="frame" x="46.666666666666657" y="406.33333333333331" width="300" height="39.666666666666686"/>
-                                <constraints>
-                                    <constraint firstAttribute="width" constant="300" id="Pek-AE-X0k"/>
-                                </constraints>
+                                <rect key="frame" x="89.333333333333329" y="406.33333333333331" width="214.66666666666669" height="39.666666666666686"/>
                                 <fontDescription key="fontDescription" type="system" weight="heavy" pointSize="34"/>
                                 <color key="textColor" systemColor="systemCyanColor"/>
                                 <nil key="highlightedColor"/>

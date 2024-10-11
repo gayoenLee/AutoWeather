@@ -42,6 +42,7 @@ final class MapViewCell: UICollectionViewCell {
         let initialLocation = CLLocation(latitude: Double(location.lat)!, longitude: Double(location.lon)!)
         let regionRadius: CLLocationDistance = 1000
         let coordinateRegion = MKCoordinateRegion(center: initialLocation.coordinate, latitudinalMeters: regionRadius, longitudinalMeters: regionRadius)
+        
         mapView.setRegion(coordinateRegion, animated: true)
         addMarker(at: CLLocationCoordinate2D(latitude: Double(location.lat)!, longitude:Double(location.lon)!))
     }

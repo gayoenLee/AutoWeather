@@ -22,11 +22,11 @@ final class WeatherRepositoryImpl: WeatherRepository {
     
     
     func getWeatherData(for city: SearchCity) -> Single<WeatherModel> {
-        print("레포지토리 getweather: \(city)")
+
         return weatherService.fetchWeather(for: city)
             .do(onSuccess: { weatherModel in
-                      print("날씨 데이터 성공적으로 가져옴: ")
-                  }, onError: { error in
+
+            }, onError: { error in
                       print("날씨 데이터 가져오는 중 에러 발생: \(error)")
                   })
     }

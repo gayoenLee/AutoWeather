@@ -47,8 +47,7 @@ final class GridWeatherCellView: UIView {
             make.edges.equalToSuperview().inset(8)
         }
         
-        // 스타일 설정
-        backgroundColor = UIColor(red: 0.4, green: 0.6, blue: 0.9, alpha: 1)
+        backgroundColor = .txtFieldColor
         layer.cornerRadius = 8
         clipsToBounds = true
     }

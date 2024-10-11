@@ -29,10 +29,7 @@ public struct APIClient<Request: BaseAPIURLConvertable, Response: Decodable> {
                         single(.success(data))
                     case .failure(let error):
                         single(.failure(error))
-                        
-                        
                     }
-                    
                 }
             return Disposables.create {
                 dataRequest.cancel()

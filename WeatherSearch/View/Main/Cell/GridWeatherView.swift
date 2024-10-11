@@ -57,7 +57,6 @@ final class GridWeatherView: UICollectionViewCell {
     private func setupView() {
         addSubview(stackView)
         
-        // Add two rows to stackView
         firstRowStackView.addArrangedSubview(humidityView)
         firstRowStackView.addArrangedSubview(cloudView)
         secondRowStackView.addArrangedSubview(windSpeedView)

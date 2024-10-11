@@ -50,7 +50,6 @@ final class AppCoordinator: Coordinator {
         self.window = window
       }
     
-    // 앱 시작 시 WeatherViewController를 설정
     func start() {
         showLoadingScreen()
         fetchDataAndLoadMainScreen()
@@ -68,6 +67,7 @@ final class AppCoordinator: Coordinator {
          window.rootViewController = navigationController
      }
     
+    // 데이터가 fetche되면 로딩 화면 -> 메인으로 이동시키기 위함
     private func fetchDataAndLoadMainScreen() {
             weatherViewController.viewModel.isLoading
                 .skip(1)
@@ -80,12 +80,13 @@ final class AppCoordinator: Coordinator {
                     }
                 })
                 .disposed(by: disposeBag)
-            
+            // 데이터 fetch
             weatherViewController.viewModel.bindInputToFetchWeather()
         }
     
-    // WeatherViewController에서 발생하는 이벤트 처리
+    // WeatherViewController에서 검색바 클릭 -> 메인 화면으로 이동 or 그 반대
     private func bindWeatherViewController() {
+        
         weatherViewController.searchBarTapped
             .subscribe(onNext: { [weak self] in
                 self?.showSearchViewController()

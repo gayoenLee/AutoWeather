@@ -36,7 +36,6 @@ final class FiveDayInfoCell: UICollectionViewCell {
     
     private func setupView() {
         stackView.axis = .vertical
-//        stackView.alignment = .fill
         stackView.distribution = .fill
         stackView.spacing = 8
         contentView.addSubview(titleLabel)

@@ -16,7 +16,6 @@ final class SearchViewController: UIViewController {
     private let viewModel: WeatherDataViewModel
     private let searchVM: CitySearchViewModel
     private let disposeBag = DisposeBag()
-    var didSelectCity = PublishSubject<SearchCity>()
     private let searchView = CustomSearchView()
     
     init(viewModel: WeatherDataViewModel, searchVM: CitySearchViewModel) {
@@ -39,7 +38,6 @@ final class SearchViewController: UIViewController {
         
         setupSearchView()
         bindTableView()
-        setupKeyboardNotification()  // 키보드 노티피케이션 설정
         bindSearchBar()
         
     }
@@ -51,17 +49,19 @@ final class SearchViewController: UIViewController {
         }
     }
     
-    // 키보드 노티피케이션 설정
-    private func setupKeyboardNotification() {
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
-    }
-    
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-    
     private func bindSearchBar() {
+        
+        searchView.searchBar.rx.textDidBeginEditing
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] in
+                guard let self = self else { return }
+                DispatchQueue.main.async {
+                    self.searchView.searchBar.becomeFirstResponder()
+
+                }
+            })
+            .disposed(by: disposeBag)
+        
         // 검색어에 따른 필터링 로직
         searchView.searchBar.rx.text.orEmpty
             .distinctUntilChanged()
@@ -103,17 +103,26 @@ final class SearchViewController: UIViewController {
     
     // 키보드가 나타날 때 호출되는 메서드
     @objc private func keyboardWillShow(notification: NSNotification) {
-        if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue {
+        if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue, let animationDuration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double,
+           let animationCurve = notification.userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt {
             let keyboardHeight = keyboardFrame.cgRectValue.height
-            // 테이블뷰의 bottom inset을 키보드 높이만큼 설정
-            searchView.tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: keyboardHeight, right: 0)
+            UIView.animate(withDuration: animationDuration, delay: 0, options: UIView.AnimationOptions(rawValue: animationCurve << 16), animations: {
+                // 테이블뷰의 bottom inset을 키보드 높이만큼 설정
+                self.searchView.tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: keyboardHeight, right: 0)
+            })
         }
     }
     
     // 키보드가 사라질 때 호출되는 메서드
     @objc private func keyboardWillHide(notification: NSNotification) {
-        // 테이블뷰의 bottom inset을 0으로 설정
-        searchView.tableView.contentInset = .zero
+        if let animationDuration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double,
+           let animationCurve = notification.userInfo?[UIResponder.keyboardAnimationCurveUserInfoKey] as? UInt {
+            
+            // 애니메이션 적용
+            UIView.animate(withDuration: animationDuration, delay: 0, options: UIView.AnimationOptions(rawValue: animationCurve << 16), animations: {
+                self.searchView.tableView.contentInset = .zero
+            })
+        }
     }
     
 }

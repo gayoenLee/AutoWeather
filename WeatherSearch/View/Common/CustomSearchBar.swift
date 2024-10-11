@@ -30,7 +30,7 @@ final class CustomSearchBar: UISearchBar {
            
            if let textField = self.value(forKey: "searchField") as? UITextField {
                textField.backgroundColor = .txtFieldColor
-               textField.textColor = .darkGray
+               textField.textColor = .white
                textField.font = UIFont.systemFont(ofSize: 16)
                textField.layer.cornerRadius = 20
                textField.clipsToBounds = true
@@ -38,12 +38,14 @@ final class CustomSearchBar: UISearchBar {
                    string: "Search",
                    attributes: [NSAttributedString.Key.foregroundColor: UIColor.white]
                )
-               
+               textField.autocorrectionType = .no
+               textField.spellCheckingType = .no
+               textField.autocapitalizationType = .none
                let iconView = UIImageView(image: UIImage(systemName: "magnifyingglass"))
-               iconView.tintColor = .lightGray
+               iconView.tintColor = .white
                textField.leftView = iconView
                textField.leftViewMode = .always
-               textField.textAlignment = .center
+               textField.textAlignment = .left
            }
        }
    }

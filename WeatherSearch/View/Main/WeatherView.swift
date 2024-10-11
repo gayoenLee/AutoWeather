@@ -57,7 +57,6 @@ final class WeatherView: UIView {
     
     private func setupCollectionView() {
         collectionView = WeatherViewFactory.createCollectionView()
-        
         containerView.addSubview(collectionView)
         collectionView.snp.makeConstraints { make in
             make.edges.equalToSuperview().inset(8)  // containerView 내에서 꽉 차도록 설정
@@ -83,5 +82,4 @@ final class WeatherView: UIView {
             make.bottom.equalTo(safeAreaLayoutGuide)  // 안전영역까지 containerView가 확장되도록 수정
         }
     }
-    
 }

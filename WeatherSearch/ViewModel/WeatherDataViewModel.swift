@@ -11,9 +11,6 @@ import RxCocoa
 import Alamofire
 import UIKit
 
-enum CityFileError: Error {
-    case fileNotFound
-}
 
 final class WeatherDataViewModel {
     private let processWeatherDataUseCase: ProcessWeatherDataUseCaseImpl
@@ -29,24 +26,21 @@ final class WeatherDataViewModel {
     
     init(processWeatherDataUseCase: ProcessWeatherDataUseCaseImpl) {
         self.processWeatherDataUseCase = processWeatherDataUseCase
-        //bindInputToFetchWeather()
     }
     
      func bindInputToFetchWeather() {
         getSearchCity()
             .flatMapLatest { [weak self] city -> Single<FullWeatherData> in
+                
                 guard let self = self else {
-                    print("시작 못함")
+                    self?.updateUIWithFetchedData(nil, loadingState: false)
+                    self?.handleFetchError(CityListError.deallocated)
                     return Single.error(NSError(domain: "WeatherApp", code: -1, userInfo: [NSLocalizedDescriptionKey: "ViewModel is deallocated"]))
                 }
-                print("바인드인풋")
-                //updateUIWithFetchedData(nil, loadingState: true)
                 return self.processWeatherDataUseCase.execute(for: city)
             }
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] processedResult in
-                print("바인드 인풋 섭스크라입 결과 받음")
-                
                 self?.updateUIWithFetchedData(processedResult, loadingState: false)
             })
             .disposed(by: disposeBag)
@@ -62,7 +56,7 @@ final class WeatherDataViewModel {
     private func getSearchCity() -> Observable<SearchCity> {
         return searchCity
             .compactMap { $0 ?? SearchCity(cityName: "Asan", lat: "36.783611", lon: "127.004173") }
-            .distinctUntilChanged() //동일한 값은 무시하는 것
+            .distinctUntilChanged()
     }
     // UI 상태 업데이트
     private func updateUIWithFetchedData(_ result: FullWeatherData?, loadingState: Bool) {
@@ -70,9 +64,7 @@ final class WeatherDataViewModel {
         DispatchQueue.main.async {
             if let result = result {
                 self.fullWeatherData.accept(result)
-                print("변경 전 로딩값: \(self.isLoading.value)")
                 self.isLoading.accept(loadingState)
-                print("로딩값 변경함 : \(self.isLoading.value)")
             }
         }
     }

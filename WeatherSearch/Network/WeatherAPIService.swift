@@ -21,23 +21,18 @@ final class WeatherAPIService: WeatherServiceProtocol {
         }
         return weatherKey
     }
-    
-    
-    
+        
     func fetchWeather(for city: SearchCity) -> Single<WeatherModel>  {
         let request : WeatherRequest
         
-        if let cityName = city.cityName{
+        if city.cityName != nil{
             request = .cityName(data: city)
         }else{
             request = .latlon(data: city)
         }
-        print("featch weather: \(String(describing: request.parameters))")
             let client = APIClient<WeatherRequest, WeatherModel>(request: request)
-        print("여기서 클라이언트")
             return client.requestData()
             .do(onSuccess: { weatherModel in
-                   // print("API 응답 받음: \(weatherModel)")
                 }, onError: { error in
                     print("API 요청 중 에러 발생: \(error)")
                 })
