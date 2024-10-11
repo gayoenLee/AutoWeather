@@ -55,7 +55,7 @@ final class WeatherDataViewModel {
     
     private func getSearchCity() -> Observable<SearchCity> {
         return searchCity
-            .compactMap { $0 ?? SearchCity(cityName: "Asan", lat: "36.783611", lon: "127.004173") }
+            .compactMap { $0 ?? SearchCity(id:1839726 ,cityName: "Asan", country: "KR",lat: "36.783611", lon: "127.004173") }
             .distinctUntilChanged()
     }
     // UI 상태 업데이트

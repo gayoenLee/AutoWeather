@@ -83,7 +83,7 @@ final class SearchViewController: UIViewController {
         // 테이블뷰의 선택 이벤트 처리
         searchView.tableView.rx.modelSelected(CityDataList.self)
             .map { data in
-                let result = SearchCity(cityName: data.name, lat: String(data.coord.lat), lon: String(data.coord.lon))
+                let result = SearchCity(id: data.id,cityName: data.name, country: data.country, lat: String(data.coord.lat), lon: String(data.coord.lon))
                 return result
             }
             .subscribe(onNext: { [weak self] city in

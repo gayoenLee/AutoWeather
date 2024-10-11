@@ -25,11 +25,7 @@ final class WeatherAPIService: WeatherServiceProtocol {
     func fetchWeather(for city: SearchCity) -> Single<WeatherModel>  {
         let request : WeatherRequest
         
-        if city.cityName != nil{
-            request = .cityName(data: city)
-        }else{
-            request = .latlon(data: city)
-        }
+            request = .cityInfoToShow(data: city)
             let client = APIClient<WeatherRequest, WeatherModel>(request: request)
             return client.requestData()
             .do(onSuccess: { weatherModel in

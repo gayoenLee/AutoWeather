@@ -8,14 +8,18 @@
 import Foundation
 
 struct SearchCity: Codable, Equatable {
+    var id: Int?
     var cityName: String?
+    var country: String?
     var appid: String
     var lat: String?
     var lon: String?
     var units: String
     
-    init(cityName: String?, lat: String?, lon: String?) {
+    init(id: Int?, cityName: String?, country: String?,lat: String?, lon: String?) {
+        self.id = id
         self.cityName = cityName
+        self.country = country
         self.appid = WeatherAPIService.getApiKey()
         self.lat = lat
         self.lon = lon

@@ -10,19 +10,18 @@ import Alamofire
 
 
 enum WeatherRequest: WeatherAPIURLConvertible {
-    case cityName(data: SearchCity)
-    case latlon(data: SearchCity)
+    case cityInfoToShow(data: SearchCity)
     
     var path: String {
         switch self {
-        case .cityName, .latlon:
+        case .cityInfoToShow:
             return "/forecast"
         }
     }
     
     var method: HTTPMethod {
         switch self {
-        case .cityName, .latlon:
+        case .cityInfoToShow:
             return .get
             
         }
@@ -30,25 +29,16 @@ enum WeatherRequest: WeatherAPIURLConvertible {
     
     var encoder: ParameterEncoding {
         switch self {
-        case .cityName, .latlon:
+        case .cityInfoToShow:
             return URLEncoding.default
         }
     }
     
     var parameters: Parameters? {
         switch self {
-        case .cityName(let info):
-            return ["q": info.cityName!,
-                    "appid":info.appid,
-                    "units": info.units,
-                    "lang":"kr",
-                    "cnt" : 35
-            ]
-            
-            
-        case .latlon(let info):
-            return ["lat":info.lat!,
-                    "lon":info.lon!,
+        case .cityInfoToShow(let info):
+            return ["lat": info.lat!,
+                    "lon": info.lon!,
                     "appid":info.appid,
                     "units": info.units,
                     "lang":"kr",
