@@ -45,6 +45,10 @@ final class MapViewCell: UICollectionViewCell {
         
         mapView.setRegion(coordinateRegion, animated: true)
         addMarker(at: CLLocationCoordinate2D(latitude: Double(location.lat)!, longitude:Double(location.lon)!))
+        
+        backgroundColor = .cellBgColor
+        layer.cornerRadius = 8
+        clipsToBounds = true
     }
     
     func configure(with coordData: MapLocationData) {
@@ -62,7 +66,7 @@ final class MapViewCell: UICollectionViewCell {
         mapView.snp.makeConstraints { make in
             make.top.equalTo(title.snp.bottom).offset(8)
             make.leading.trailing.equalToSuperview().inset(16)
-            make.bottom.equalToSuperview()
+            make.bottom.equalToSuperview().inset(16)
         }
     }
     

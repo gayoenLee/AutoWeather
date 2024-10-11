@@ -52,7 +52,6 @@ final class WeatherCollectionViewDataSource: NSObject, WeatherViewDelegate, Weat
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "HourlyWeatherCell", for: indexPath) as! HourlyWeatherCell
             //이틀치의 데이터만 전달
             if let data = fullWeatherData?.threeHourData {
-                print("데이터 전달")
                 cell.configure(with: data)
             }
             return cell

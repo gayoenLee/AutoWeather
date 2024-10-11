@@ -41,7 +41,7 @@ final class FiveDayInfoCell: UICollectionViewCell {
         contentView.addSubview(titleLabel)
         contentView.addSubview(stackView)
         
-        contentView.backgroundColor = UIColor(red: 0.4, green: 0.6, blue: 0.9, alpha: 1) // 배경색
+        contentView.backgroundColor = .cellBgColor // 배경색
         contentView.layer.cornerRadius = 8
     }
     

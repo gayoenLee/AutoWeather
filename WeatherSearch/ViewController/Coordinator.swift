@@ -73,7 +73,6 @@ final class AppCoordinator: Coordinator {
                 .skip(1)
                 .distinctUntilChanged()
                 .subscribe(onNext: { [weak self] isLoading in
-                    print("isloading")
                     if !isLoading {
                         self?.loadingViewController.stopLoading()
                         self?.showMainScreen()

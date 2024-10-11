@@ -47,7 +47,7 @@ final class GridWeatherCellView: UIView {
             make.edges.equalToSuperview().inset(8)
         }
         
-        backgroundColor = .txtFieldColor
+        backgroundColor = .cellBg
         layer.cornerRadius = 8
         clipsToBounds = true
     }

@@ -52,7 +52,7 @@ final class HourlyWeatherCell: UICollectionViewCell {
         contentView.addSubview(windSpeedLabel)  // 상단 문장 추가
         contentView.addSubview(scrollView)      // 하단 스크롤 뷰 추가
         
-        contentView.backgroundColor = UIColor(red: 0.4, green: 0.6, blue: 0.9, alpha: 1) // 배경색
+        contentView.backgroundColor = .cellBgColor// 배경색
         contentView.layer.cornerRadius = 8
     }
     
