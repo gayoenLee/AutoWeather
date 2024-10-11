@@ -37,8 +37,8 @@ enum WeatherRequest: WeatherAPIURLConvertible {
     var parameters: Parameters? {
         switch self {
         case .cityInfoToShow(let info):
-            return ["lat": info.lat!,
-                    "lon": info.lon!,
+            return ["lat": info.lat,
+                    "lon": info.lon,
                     "appid":info.appid,
                     "units": info.units,
                     "lang":"kr",
